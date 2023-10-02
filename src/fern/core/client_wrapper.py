@@ -6,7 +6,7 @@ import httpx
 
 
 class BaseClientWrapper:
-    def __init__(self, *, token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None, base_url: str):
+    def __init__(self, *, token: typing.Union[str, typing.Callable[[], str]], base_url: str):
         self._token = token
         self._base_url = base_url
 
@@ -14,15 +14,13 @@ class BaseClientWrapper:
         headers: typing.Dict[str, str] = {
             "X-Fern-Language": "Python",
             "X-Fern-SDK-Name": "fern-api",
-            "X-Fern-SDK-Version": "0.0.0",
+            "X-Fern-SDK-Version": "0.0.1",
         }
-        token = self._get_token()
-        if token is not None:
-            headers["Authorization"] = f"Bearer {token}"
+        headers["Authorization"] = f"Bearer {self._get_token()}"
         return headers
 
-    def _get_token(self) -> typing.Optional[str]:
-        if isinstance(self._token, str) or self._token is None:
+    def _get_token(self) -> str:
+        if isinstance(self._token, str):
             return self._token
         else:
             return self._token()
@@ -33,11 +31,7 @@ class BaseClientWrapper:
 
 class SyncClientWrapper(BaseClientWrapper):
     def __init__(
-        self,
-        *,
-        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
-        base_url: str,
-        httpx_client: httpx.Client,
+        self, *, token: typing.Union[str, typing.Callable[[], str]], base_url: str, httpx_client: httpx.Client
     ):
         super().__init__(token=token, base_url=base_url)
         self.httpx_client = httpx_client
@@ -45,11 +39,7 @@ class SyncClientWrapper(BaseClientWrapper):
 
 class AsyncClientWrapper(BaseClientWrapper):
     def __init__(
-        self,
-        *,
-        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
-        base_url: str,
-        httpx_client: httpx.AsyncClient,
+        self, *, token: typing.Union[str, typing.Callable[[], str]], base_url: str, httpx_client: httpx.AsyncClient
     ):
         super().__init__(token=token, base_url=base_url)
         self.httpx_client = httpx_client

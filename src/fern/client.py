@@ -15,7 +15,7 @@ class Fern:
         *,
         base_url: typing.Optional[str] = None,
         environment: FernEnvironment = FernEnvironment.PRODUCTION,
-        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        token: typing.Union[str, typing.Callable[[], str]],
         timeout: typing.Optional[float] = 60
     ):
         self._client_wrapper = SyncClientWrapper(
@@ -32,7 +32,7 @@ class AsyncFern:
         *,
         base_url: typing.Optional[str] = None,
         environment: FernEnvironment = FernEnvironment.PRODUCTION,
-        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
+        token: typing.Union[str, typing.Callable[[], str]],
         timeout: typing.Optional[float] = 60
     ):
         self._client_wrapper = AsyncClientWrapper(

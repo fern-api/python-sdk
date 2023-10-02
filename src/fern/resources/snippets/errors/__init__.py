@@ -2,7 +2,6 @@
 
 from .api_id_not_found import ApiIdNotFound
 from .endpoint_not_found import EndpointNotFound
-from .org_id_not_found import OrgIdNotFound
 from .sdk_not_found import SdkNotFound
 
-__all__ = ["ApiIdNotFound", "EndpointNotFound", "OrgIdNotFound", "SdkNotFound"]
+__all__ = ["ApiIdNotFound", "EndpointNotFound", "SdkNotFound"]

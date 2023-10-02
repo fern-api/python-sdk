@@ -13,10 +13,7 @@ from ...core.remove_none_from_dict import remove_none_from_dict
 from .errors.api_id_not_found import ApiIdNotFound
 from .errors.endpoint_not_found import EndpointNotFound
 from .errors.sdk_not_found import SdkNotFound
-from .resources.api.client import ApiClient, AsyncApiClient
 from .resources.commons.types.api_id import ApiId
-from .resources.docs.client import AsyncDocsClient, DocsClient
-from .resources.snippets_factory.client import AsyncSnippetsFactoryClient, SnippetsFactoryClient
 from .types.endpoint_identifier import EndpointIdentifier
 from .types.sdk import Sdk
 from .types.snippet import Snippet
@@ -29,9 +26,6 @@ OMIT = typing.cast(typing.Any, ...)
 class SnippetsClient:
     def __init__(self, *, client_wrapper: SyncClientWrapper):
         self._client_wrapper = client_wrapper
-        self.api = ApiClient(client_wrapper=self._client_wrapper)
-        self.docs = DocsClient(client_wrapper=self._client_wrapper)
-        self.snippets_factory = SnippetsFactoryClient(client_wrapper=self._client_wrapper)
 
     def get(
         self,
@@ -120,9 +114,6 @@ class SnippetsClient:
 class AsyncSnippetsClient:
     def __init__(self, *, client_wrapper: AsyncClientWrapper):
         self._client_wrapper = client_wrapper
-        self.api = AsyncApiClient(client_wrapper=self._client_wrapper)
-        self.docs = AsyncDocsClient(client_wrapper=self._client_wrapper)
-        self.snippets_factory = AsyncSnippetsFactoryClient(client_wrapper=self._client_wrapper)
 
     async def get(
         self,
