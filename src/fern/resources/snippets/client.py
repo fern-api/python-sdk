@@ -4,8 +4,6 @@ import typing
 import urllib.parse
 from json.decoder import JSONDecodeError
 
-from ...core import pydantic 
-
 from ...core.api_error import ApiError
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.jsonable_encoder import jsonable_encoder
@@ -18,6 +16,11 @@ from .types.endpoint_identifier import EndpointIdentifier
 from .types.sdk import Sdk
 from .types.snippet import Snippet
 from .types.snippets_page import SnippetsPage
+
+try:
+    import pydantic.v1 as pydantic  # type: ignore
+except ImportError:
+    import pydantic  # type: ignore
 
 # this is used as the default value for optional parameters
 OMIT = typing.cast(typing.Any, ...)
@@ -44,6 +47,13 @@ class SnippetsClient:
                                                        snippets for the latest published SDKs will be returned.
 
             - endpoint: EndpointIdentifier.
+        ---
+        from fern.client import Fern
+
+        from fern import EndpointIdentifier, EndpointMethod
+
+        client = Fern(token="YOUR_TOKEN")
+        client.snippets.get(endpoint=EndpointIdentifier(method=EndpointMethod.GET, path="/v1/search"))
         """
         _request: typing.Dict[str, typing.Any] = {"endpoint": endpoint}
         if api_id is not OMIT:
@@ -87,7 +97,11 @@ class SnippetsClient:
 
             - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
                                                        snippets for the latest published SDKs will be returned.
+                                                       ---
+        from fern.client import Fern
 
+        client = Fern(token="YOUR_TOKEN")
+        client.snippets.load()
         """
         _request: typing.Dict[str, typing.Any] = {}
         if api_id is not OMIT:
@@ -132,6 +146,13 @@ class AsyncSnippetsClient:
                                                        snippets for the latest published SDKs will be returned.
 
             - endpoint: EndpointIdentifier.
+        ---
+        from fern.client import AsyncFern
+
+        from fern import EndpointIdentifier, EndpointMethod
+
+        client = AsyncFern(token="YOUR_TOKEN")
+        await client.snippets.get(endpoint=EndpointIdentifier(method=EndpointMethod.GET, path="/v1/search"))
         """
         _request: typing.Dict[str, typing.Any] = {"endpoint": endpoint}
         if api_id is not OMIT:
@@ -175,7 +196,11 @@ class AsyncSnippetsClient:
 
             - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
                                                        snippets for the latest published SDKs will be returned.
+                                                       ---
+        from fern.client import AsyncFern
 
+        client = AsyncFern(token="YOUR_TOKEN")
+        await client.snippets.load()
         """
         _request: typing.Dict[str, typing.Any] = {}
         if api_id is not OMIT:
