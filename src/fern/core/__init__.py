@@ -5,6 +5,7 @@ from .client_wrapper import AsyncClientWrapper, BaseClientWrapper, SyncClientWra
 from .datetime_utils import serialize_datetime
 from .jsonable_encoder import jsonable_encoder
 from .remove_none_from_dict import remove_none_from_dict
+from . import pydantic
 
 __all__ = [
     "ApiError",
@@ -14,4 +15,5 @@ __all__ = [
     "jsonable_encoder",
     "remove_none_from_dict",
     "serialize_datetime",
+    "pydantic"
 ]
