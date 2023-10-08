@@ -3,7 +3,7 @@
 import datetime as dt
 import typing
 
-import pydantic
+from ....core import pydantic
 
 from ....core.datetime_utils import serialize_datetime
 from .python_sdk import PythonSdk
