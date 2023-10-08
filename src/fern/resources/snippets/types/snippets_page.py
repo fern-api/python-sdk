@@ -3,11 +3,14 @@
 import datetime as dt
 import typing
 
-from ....core import pydantic
-
 from ....core.datetime_utils import serialize_datetime
 from .endpoint_path import EndpointPath
 from .snippets_by_endpoint_method import SnippetsByEndpointMethod
+
+try:
+    import pydantic.v1 as pydantic  # type: ignore
+except ImportError:
+    import pydantic  # type: ignore
 
 
 class SnippetsPage(pydantic.BaseModel):
