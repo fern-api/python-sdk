@@ -4,5 +4,5 @@ from ....core.api_error import ApiError
 
 
 class EndpointNotFound(ApiError):
-    def __init__(self) -> None:
-        super().__init__(status_code=404)
+    def __init__(self, body: str):
+        super().__init__(status_code=404, body=body)

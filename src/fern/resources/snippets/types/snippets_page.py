@@ -14,7 +14,7 @@ except ImportError:
 
 
 class SnippetsPage(pydantic.BaseModel):
-    next: typing.Optional[str] = pydantic.Field(
+    next: typing.Optional[int] = pydantic.Field(
         description="If present, pass this into the `page` query parameter to load the next page."
     )
     snippets: typing.Dict[EndpointPath, SnippetsByEndpointMethod] = pydantic.Field(

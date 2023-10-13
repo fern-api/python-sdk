@@ -25,20 +25,35 @@ from .types import (
     TypeScriptSdk,
     TypeScriptSnippet,
 )
-from .errors import ApiIdNotFound, EndpointNotFound, SdkNotFound
-from .resources import ApiId, commons
+from .errors import (
+    ApiIdNotFound,
+    ApiIdRequiredError,
+    EndpointNotFound,
+    InvalidPageError,
+    OrgIdAndApiIdNotFound,
+    OrgIdNotFound,
+    OrgIdRequiredError,
+    SdkNotFound,
+)
+from .resources import ApiId, OrgId, UnauthorizedError, UnavailableError, UserNotInOrgError, commons
 
 __all__ = [
     "ApiId",
     "ApiIdNotFound",
+    "ApiIdRequiredError",
     "EndpointIdentifier",
     "EndpointMethod",
     "EndpointNotFound",
     "EndpointPath",
     "GoSdk",
     "GoSnippet",
+    "InvalidPageError",
     "JavaSdk",
     "JavaSnippet",
+    "OrgId",
+    "OrgIdAndApiIdNotFound",
+    "OrgIdNotFound",
+    "OrgIdRequiredError",
     "PythonSdk",
     "PythonSnippet",
     "Sdk",
@@ -56,5 +71,8 @@ __all__ = [
     "SnippetsPage",
     "TypeScriptSdk",
     "TypeScriptSnippet",
+    "UnauthorizedError",
+    "UnavailableError",
+    "UserNotInOrgError",
     "commons",
 ]

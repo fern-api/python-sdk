@@ -9,9 +9,18 @@ from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.jsonable_encoder import jsonable_encoder
 from ...core.remove_none_from_dict import remove_none_from_dict
 from .errors.api_id_not_found import ApiIdNotFound
+from .errors.api_id_required_error import ApiIdRequiredError
 from .errors.endpoint_not_found import EndpointNotFound
+from .errors.invalid_page_error import InvalidPageError
+from .errors.org_id_and_api_id_not_found import OrgIdAndApiIdNotFound
+from .errors.org_id_not_found import OrgIdNotFound
+from .errors.org_id_required_error import OrgIdRequiredError
 from .errors.sdk_not_found import SdkNotFound
+from .resources.commons.errors.unauthorized_error import UnauthorizedError
+from .resources.commons.errors.unavailable_error import UnavailableError
+from .resources.commons.errors.user_not_in_org_error import UserNotInOrgError
 from .resources.commons.types.api_id import ApiId
+from .resources.commons.types.org_id import OrgId
 from .types.endpoint_identifier import EndpointIdentifier
 from .types.sdk import Sdk
 from .types.snippet import Snippet
@@ -33,6 +42,7 @@ class SnippetsClient:
     def get(
         self,
         *,
+        org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
         sdks: typing.Optional[typing.List[Sdk]] = OMIT,
         endpoint: EndpointIdentifier,
@@ -41,6 +51,9 @@ class SnippetsClient:
         Get snippet by endpoint method and path
 
         Parameters:
+            - org_id: typing.Optional[OrgId]. If the same API is defined across multiple organization,
+                                              you must specify an organization ID.
+
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
             - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
@@ -56,6 +69,8 @@ class SnippetsClient:
         client.snippets.get(endpoint=EndpointIdentifier(method=EndpointMethod.GET, path="/v1/search"))
         """
         _request: typing.Dict[str, typing.Any] = {"endpoint": endpoint}
+        if org_id is not OMIT:
+            _request["orgId"] = org_id
         if api_id is not OMIT:
             _request["apiId"] = api_id
         if sdks is not OMIT:
@@ -74,24 +89,42 @@ class SnippetsClient:
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(typing.List[Snippet], _response_json)  # type: ignore
         if "error" in _response_json:
-            if _response_json["error"] == "EndpointNotFound":
-                raise EndpointNotFound()
-            if _response_json["error"] == "SDKNotFound":
-                raise SdkNotFound()
+            if _response_json["error"] == "UnauthorizedError":
+                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "UserNotInOrgError":
+                raise UserNotInOrgError()
+            if _response_json["error"] == "UnavailableError":
+                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "ApiIdRequiredError":
+                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdRequiredError":
+                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdAndApiIdNotFound":
+                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdNotFound":
+                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
             if _response_json["error"] == "ApiIdNotFound":
-                raise ApiIdNotFound()
+                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "EndpointNotFound":
+                raise EndpointNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "SDKNotFound":
+                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def load(
         self,
         *,
         page: typing.Optional[int] = None,
+        org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
         sdks: typing.Optional[typing.List[Sdk]] = OMIT,
     ) -> SnippetsPage:
         """
         Parameters:
             - page: typing.Optional[int].
+
+            - org_id: typing.Optional[OrgId]. If the same API is defined across multiple organization,
+                                              you must specify an organization ID.
 
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
@@ -100,10 +133,19 @@ class SnippetsClient:
                                                        ---
         from fern.client import Fern
 
+        from fern import PythonSdk, Sdk_Python
+
         client = Fern(token="YOUR_TOKEN")
-        client.snippets.load()
+        client.snippets.load(
+            page=1,
+            org_id="vellum",
+            api_id="vellum-ai",
+            sdks=[Sdk_Python(value=PythonSdk(package="vellum-ai", version="1.2.1"))],
+        )
         """
         _request: typing.Dict[str, typing.Any] = {}
+        if org_id is not OMIT:
+            _request["orgId"] = org_id
         if api_id is not OMIT:
             _request["apiId"] = api_id
         if sdks is not OMIT:
@@ -122,6 +164,27 @@ class SnippetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(SnippetsPage, _response_json)  # type: ignore
+        if "error" in _response_json:
+            if _response_json["error"] == "UnauthorizedError":
+                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "UserNotInOrgError":
+                raise UserNotInOrgError()
+            if _response_json["error"] == "UnavailableError":
+                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "InvalidPageError":
+                raise InvalidPageError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "ApiIdRequiredError":
+                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdRequiredError":
+                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdAndApiIdNotFound":
+                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdNotFound":
+                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "ApiIdNotFound":
+                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "SDKNotFound":
+                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
@@ -132,6 +195,7 @@ class AsyncSnippetsClient:
     async def get(
         self,
         *,
+        org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
         sdks: typing.Optional[typing.List[Sdk]] = OMIT,
         endpoint: EndpointIdentifier,
@@ -140,6 +204,9 @@ class AsyncSnippetsClient:
         Get snippet by endpoint method and path
 
         Parameters:
+            - org_id: typing.Optional[OrgId]. If the same API is defined across multiple organization,
+                                              you must specify an organization ID.
+
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
             - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
@@ -155,6 +222,8 @@ class AsyncSnippetsClient:
         await client.snippets.get(endpoint=EndpointIdentifier(method=EndpointMethod.GET, path="/v1/search"))
         """
         _request: typing.Dict[str, typing.Any] = {"endpoint": endpoint}
+        if org_id is not OMIT:
+            _request["orgId"] = org_id
         if api_id is not OMIT:
             _request["apiId"] = api_id
         if sdks is not OMIT:
@@ -173,24 +242,42 @@ class AsyncSnippetsClient:
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(typing.List[Snippet], _response_json)  # type: ignore
         if "error" in _response_json:
-            if _response_json["error"] == "EndpointNotFound":
-                raise EndpointNotFound()
-            if _response_json["error"] == "SDKNotFound":
-                raise SdkNotFound()
+            if _response_json["error"] == "UnauthorizedError":
+                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "UserNotInOrgError":
+                raise UserNotInOrgError()
+            if _response_json["error"] == "UnavailableError":
+                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "ApiIdRequiredError":
+                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdRequiredError":
+                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdAndApiIdNotFound":
+                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdNotFound":
+                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
             if _response_json["error"] == "ApiIdNotFound":
-                raise ApiIdNotFound()
+                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "EndpointNotFound":
+                raise EndpointNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "SDKNotFound":
+                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def load(
         self,
         *,
         page: typing.Optional[int] = None,
+        org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
         sdks: typing.Optional[typing.List[Sdk]] = OMIT,
     ) -> SnippetsPage:
         """
         Parameters:
             - page: typing.Optional[int].
+
+            - org_id: typing.Optional[OrgId]. If the same API is defined across multiple organization,
+                                              you must specify an organization ID.
 
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
@@ -199,10 +286,19 @@ class AsyncSnippetsClient:
                                                        ---
         from fern.client import AsyncFern
 
+        from fern import PythonSdk, Sdk_Python
+
         client = AsyncFern(token="YOUR_TOKEN")
-        await client.snippets.load()
+        await client.snippets.load(
+            page=1,
+            org_id="vellum",
+            api_id="vellum-ai",
+            sdks=[Sdk_Python(value=PythonSdk(package="vellum-ai", version="1.2.1"))],
+        )
         """
         _request: typing.Dict[str, typing.Any] = {}
+        if org_id is not OMIT:
+            _request["orgId"] = org_id
         if api_id is not OMIT:
             _request["apiId"] = api_id
         if sdks is not OMIT:
@@ -221,4 +317,25 @@ class AsyncSnippetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(SnippetsPage, _response_json)  # type: ignore
+        if "error" in _response_json:
+            if _response_json["error"] == "UnauthorizedError":
+                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "UserNotInOrgError":
+                raise UserNotInOrgError()
+            if _response_json["error"] == "UnavailableError":
+                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "InvalidPageError":
+                raise InvalidPageError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "ApiIdRequiredError":
+                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdRequiredError":
+                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdAndApiIdNotFound":
+                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "OrgIdNotFound":
+                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "ApiIdNotFound":
+                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
+            if _response_json["error"] == "SDKNotFound":
+                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
