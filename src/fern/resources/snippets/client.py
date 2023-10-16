@@ -65,8 +65,15 @@ class SnippetsClient:
 
         from fern import EndpointIdentifier, EndpointMethod
 
-        client = Fern(token="YOUR_TOKEN")
-        client.snippets.get(endpoint=EndpointIdentifier(method=EndpointMethod.GET, path="/v1/search"))
+        client = Fern(
+            token="YOUR_TOKEN",
+        )
+        client.snippets.get(
+            endpoint=EndpointIdentifier(
+                method=EndpointMethod.GET,
+                path="/v1/search",
+            ),
+        )
         """
         _request: typing.Dict[str, typing.Any] = {"endpoint": endpoint}
         if org_id is not OMIT:
@@ -135,12 +142,21 @@ class SnippetsClient:
 
         from fern import PythonSdk, Sdk_Python
 
-        client = Fern(token="YOUR_TOKEN")
+        client = Fern(
+            token="YOUR_TOKEN",
+        )
         client.snippets.load(
             page=1,
             org_id="vellum",
             api_id="vellum-ai",
-            sdks=[Sdk_Python(value=PythonSdk(package="vellum-ai", version="1.2.1"))],
+            sdks=[
+                Sdk_Python(
+                    value=PythonSdk(
+                        package="vellum-ai",
+                        version="1.2.1",
+                    )
+                )
+            ],
         )
         """
         _request: typing.Dict[str, typing.Any] = {}
@@ -218,8 +234,15 @@ class AsyncSnippetsClient:
 
         from fern import EndpointIdentifier, EndpointMethod
 
-        client = AsyncFern(token="YOUR_TOKEN")
-        await client.snippets.get(endpoint=EndpointIdentifier(method=EndpointMethod.GET, path="/v1/search"))
+        client = AsyncFern(
+            token="YOUR_TOKEN",
+        )
+        await client.snippets.get(
+            endpoint=EndpointIdentifier(
+                method=EndpointMethod.GET,
+                path="/v1/search",
+            ),
+        )
         """
         _request: typing.Dict[str, typing.Any] = {"endpoint": endpoint}
         if org_id is not OMIT:
@@ -288,12 +311,21 @@ class AsyncSnippetsClient:
 
         from fern import PythonSdk, Sdk_Python
 
-        client = AsyncFern(token="YOUR_TOKEN")
+        client = AsyncFern(
+            token="YOUR_TOKEN",
+        )
         await client.snippets.load(
             page=1,
             org_id="vellum",
             api_id="vellum-ai",
-            sdks=[Sdk_Python(value=PythonSdk(package="vellum-ai", version="1.2.1"))],
+            sdks=[
+                Sdk_Python(
+                    value=PythonSdk(
+                        package="vellum-ai",
+                        version="1.2.1",
+                    )
+                )
+            ],
         )
         """
         _request: typing.Dict[str, typing.Any] = {}

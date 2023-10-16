@@ -20,7 +20,9 @@ pip install --upgrade fern-api
 ```python
 from fern.client import Fern
 
-client = Fern(token="YOUR_TOKEN")
+client = Fern(
+    token="YOUR_TOKEN",
+)
 ```
 <!-- End Usage  -->
 
@@ -30,7 +32,9 @@ client = Fern(token="YOUR_TOKEN")
 ```python
 from fern.client import AsyncFern
 
-client = AsyncFern(token="YOUR_TOKEN")
+client = AsyncFern(
+    token="YOUR_TOKEN",
+)
 ```
 <!-- End Async Usage  -->
 
