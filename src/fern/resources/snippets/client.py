@@ -62,8 +62,7 @@ class SnippetsClient:
             - endpoint: EndpointIdentifier.
         ---
         from fern.client import Fern
-
-        from fern import EndpointIdentifier, EndpointMethod
+        from fern.resources.snippets import EndpointIdentifier, EndpointMethod
 
         client = Fern(
             token="YOUR_TOKEN",
@@ -139,8 +138,7 @@ class SnippetsClient:
                                                        snippets for the latest published SDKs will be returned.
                                                        ---
         from fern.client import Fern
-
-        from fern import PythonSdk, Sdk_Python
+        from fern.resources.snippets import Sdk_Python
 
         client = Fern(
             token="YOUR_TOKEN",
@@ -151,10 +149,9 @@ class SnippetsClient:
             api_id="vellum-ai",
             sdks=[
                 Sdk_Python(
-                    value=PythonSdk(
-                        package="vellum-ai",
-                        version="1.2.1",
-                    )
+                    type="python",
+                    package="vellum-ai",
+                    version="1.2.1",
                 )
             ],
         )
@@ -231,8 +228,7 @@ class AsyncSnippetsClient:
             - endpoint: EndpointIdentifier.
         ---
         from fern.client import AsyncFern
-
-        from fern import EndpointIdentifier, EndpointMethod
+        from fern.resources.snippets import EndpointIdentifier, EndpointMethod
 
         client = AsyncFern(
             token="YOUR_TOKEN",
@@ -308,8 +304,7 @@ class AsyncSnippetsClient:
                                                        snippets for the latest published SDKs will be returned.
                                                        ---
         from fern.client import AsyncFern
-
-        from fern import PythonSdk, Sdk_Python
+        from fern.resources.snippets import Sdk_Python
 
         client = AsyncFern(
             token="YOUR_TOKEN",
@@ -320,10 +315,9 @@ class AsyncSnippetsClient:
             api_id="vellum-ai",
             sdks=[
                 Sdk_Python(
-                    value=PythonSdk(
-                        package="vellum-ai",
-                        version="1.2.1",
-                    )
+                    type="python",
+                    package="vellum-ai",
+                    version="1.2.1",
                 )
             ],
         )
