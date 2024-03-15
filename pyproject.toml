@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "fern-api"
-version = "0.0.85"
+version = "0.0.86"
 description = ""
 readme = "README.md"
 authors = []
