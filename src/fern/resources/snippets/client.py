@@ -8,22 +8,13 @@ from ...core.api_error import ApiError
 from ...core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from ...core.jsonable_encoder import jsonable_encoder
 from ...core.remove_none_from_dict import remove_none_from_dict
-from .errors.api_id_not_found import ApiIdNotFound
-from .errors.api_id_required_error import ApiIdRequiredError
-from .errors.endpoint_not_found import EndpointNotFound
-from .errors.invalid_page_error import InvalidPageError
-from .errors.org_id_and_api_id_not_found import OrgIdAndApiIdNotFound
-from .errors.org_id_not_found import OrgIdNotFound
-from .errors.org_id_required_error import OrgIdRequiredError
-from .errors.sdk_not_found import SdkNotFound
-from .resources.commons.errors.unauthorized_error import UnauthorizedError
-from .resources.commons.errors.unavailable_error import UnavailableError
-from .resources.commons.errors.user_not_in_org_error import UserNotInOrgError
-from .resources.commons.types.api_id import ApiId
-from .resources.commons.types.org_id import OrgId
+from ...core.request_options import RequestOptions
+from ..commons.types.api_id import ApiId
+from ..commons.types.org_id import OrgId
 from .types.endpoint_identifier import EndpointIdentifier
 from .types.sdk import Sdk
 from .types.snippet import Snippet
+from .types.snippet_load_level import SnippetLoadLevel
 from .types.snippets_page import SnippetsPage
 
 try:
@@ -44,8 +35,10 @@ class SnippetsClient:
         *,
         org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
-        sdks: typing.Optional[typing.List[Sdk]] = OMIT,
+        sdks: typing.Optional[typing.Sequence[Sdk]] = OMIT,
+        load_level: typing.Optional[SnippetLoadLevel] = OMIT,
         endpoint: EndpointIdentifier,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[Snippet]:
         """
         Get snippet by endpoint method and path
@@ -56,13 +49,19 @@ class SnippetsClient:
 
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
-            - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
-                                                       snippets for the latest published SDKs will be returned.
+            - sdks: typing.Optional[typing.Sequence[Sdk]]. The SDKs for which to load snippets. If unspecified,
+                                                           snippets for the latest published SDKs will be returned.
+
+            - load_level: typing.Optional[SnippetLoadLevel]. The level of detail to load for the snippet. If unspecified,
+                                                             the full snippet will be returned.
 
             - endpoint: EndpointIdentifier.
+
+            - request_options: typing.Optional[RequestOptions]. Request-specific configuration.
         ---
         from fern.client import Fern
-        from fern.resources.snippets import EndpointIdentifier, EndpointMethod
+
+        from fern import EndpointIdentifier, EndpointMethod
 
         client = Fern(
             token="YOUR_TOKEN",
@@ -81,12 +80,33 @@ class SnippetsClient:
             _request["apiId"] = api_id
         if sdks is not OMIT:
             _request["sdks"] = sdks
+        if load_level is not OMIT:
+            _request["loadLevel"] = load_level
         _response = self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "snippets"),
-            json=jsonable_encoder(_request),
-            headers=self._client_wrapper.get_headers(),
-            timeout=60,
+            params=jsonable_encoder(
+                request_options.get("additional_query_parameters") if request_options is not None else None
+            ),
+            json=jsonable_encoder(_request)
+            if request_options is None or request_options.get("additional_body_parameters") is None
+            else {
+                **jsonable_encoder(_request),
+                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
+            },
+            headers=jsonable_encoder(
+                remove_none_from_dict(
+                    {
+                        **self._client_wrapper.get_headers(),
+                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
+                    }
+                )
+            ),
+            timeout=request_options.get("timeout_in_seconds")
+            if request_options is not None and request_options.get("timeout_in_seconds") is not None
+            else 60,
+            retries=0,
+            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
         )
         try:
             _response_json = _response.json()
@@ -94,27 +114,6 @@ class SnippetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(typing.List[Snippet], _response_json)  # type: ignore
-        if "error" in _response_json:
-            if _response_json["error"] == "UnauthorizedError":
-                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "UserNotInOrgError":
-                raise UserNotInOrgError()
-            if _response_json["error"] == "UnavailableError":
-                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdRequiredError":
-                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdRequiredError":
-                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdAndApiIdNotFound":
-                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdNotFound":
-                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdNotFound":
-                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "EndpointNotFound":
-                raise EndpointNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "SDKNotFound":
-                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     def load(
@@ -123,7 +122,9 @@ class SnippetsClient:
         page: typing.Optional[int] = None,
         org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
-        sdks: typing.Optional[typing.List[Sdk]] = OMIT,
+        sdks: typing.Optional[typing.Sequence[Sdk]] = OMIT,
+        load_level: typing.Optional[SnippetLoadLevel] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> SnippetsPage:
         """
         Parameters:
@@ -134,11 +135,17 @@ class SnippetsClient:
 
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
-            - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
-                                                       snippets for the latest published SDKs will be returned.
-                                                       ---
+            - sdks: typing.Optional[typing.Sequence[Sdk]]. The SDKs for which to load snippets. If unspecified,
+                                                           snippets for the latest published SDKs will be returned.
+
+            - load_level: typing.Optional[SnippetLoadLevel]. The level of detail to load for the snippet. If unspecified,
+                                                             the full snippet will be returned.
+
+            - request_options: typing.Optional[RequestOptions]. Request-specific configuration.
+        ---
         from fern.client import Fern
-        from fern.resources.snippets import Sdk_Python
+
+        from fern import Sdk_Python
 
         client = Fern(
             token="YOUR_TOKEN",
@@ -163,13 +170,42 @@ class SnippetsClient:
             _request["apiId"] = api_id
         if sdks is not OMIT:
             _request["sdks"] = sdks
+        if load_level is not OMIT:
+            _request["loadLevel"] = load_level
         _response = self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "snippets/load"),
-            params=remove_none_from_dict({"page": page}),
-            json=jsonable_encoder(_request),
-            headers=self._client_wrapper.get_headers(),
-            timeout=60,
+            params=jsonable_encoder(
+                remove_none_from_dict(
+                    {
+                        "page": page,
+                        **(
+                            request_options.get("additional_query_parameters", {})
+                            if request_options is not None
+                            else {}
+                        ),
+                    }
+                )
+            ),
+            json=jsonable_encoder(_request)
+            if request_options is None or request_options.get("additional_body_parameters") is None
+            else {
+                **jsonable_encoder(_request),
+                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
+            },
+            headers=jsonable_encoder(
+                remove_none_from_dict(
+                    {
+                        **self._client_wrapper.get_headers(),
+                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
+                    }
+                )
+            ),
+            timeout=request_options.get("timeout_in_seconds")
+            if request_options is not None and request_options.get("timeout_in_seconds") is not None
+            else 60,
+            retries=0,
+            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
         )
         try:
             _response_json = _response.json()
@@ -177,27 +213,6 @@ class SnippetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(SnippetsPage, _response_json)  # type: ignore
-        if "error" in _response_json:
-            if _response_json["error"] == "UnauthorizedError":
-                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "UserNotInOrgError":
-                raise UserNotInOrgError()
-            if _response_json["error"] == "UnavailableError":
-                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "InvalidPageError":
-                raise InvalidPageError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdRequiredError":
-                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdRequiredError":
-                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdAndApiIdNotFound":
-                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdNotFound":
-                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdNotFound":
-                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "SDKNotFound":
-                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
 
@@ -210,8 +225,10 @@ class AsyncSnippetsClient:
         *,
         org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
-        sdks: typing.Optional[typing.List[Sdk]] = OMIT,
+        sdks: typing.Optional[typing.Sequence[Sdk]] = OMIT,
+        load_level: typing.Optional[SnippetLoadLevel] = OMIT,
         endpoint: EndpointIdentifier,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> typing.List[Snippet]:
         """
         Get snippet by endpoint method and path
@@ -222,13 +239,19 @@ class AsyncSnippetsClient:
 
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
-            - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
-                                                       snippets for the latest published SDKs will be returned.
+            - sdks: typing.Optional[typing.Sequence[Sdk]]. The SDKs for which to load snippets. If unspecified,
+                                                           snippets for the latest published SDKs will be returned.
+
+            - load_level: typing.Optional[SnippetLoadLevel]. The level of detail to load for the snippet. If unspecified,
+                                                             the full snippet will be returned.
 
             - endpoint: EndpointIdentifier.
+
+            - request_options: typing.Optional[RequestOptions]. Request-specific configuration.
         ---
         from fern.client import AsyncFern
-        from fern.resources.snippets import EndpointIdentifier, EndpointMethod
+
+        from fern import EndpointIdentifier, EndpointMethod
 
         client = AsyncFern(
             token="YOUR_TOKEN",
@@ -247,12 +270,33 @@ class AsyncSnippetsClient:
             _request["apiId"] = api_id
         if sdks is not OMIT:
             _request["sdks"] = sdks
+        if load_level is not OMIT:
+            _request["loadLevel"] = load_level
         _response = await self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "snippets"),
-            json=jsonable_encoder(_request),
-            headers=self._client_wrapper.get_headers(),
-            timeout=60,
+            params=jsonable_encoder(
+                request_options.get("additional_query_parameters") if request_options is not None else None
+            ),
+            json=jsonable_encoder(_request)
+            if request_options is None or request_options.get("additional_body_parameters") is None
+            else {
+                **jsonable_encoder(_request),
+                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
+            },
+            headers=jsonable_encoder(
+                remove_none_from_dict(
+                    {
+                        **self._client_wrapper.get_headers(),
+                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
+                    }
+                )
+            ),
+            timeout=request_options.get("timeout_in_seconds")
+            if request_options is not None and request_options.get("timeout_in_seconds") is not None
+            else 60,
+            retries=0,
+            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
         )
         try:
             _response_json = _response.json()
@@ -260,27 +304,6 @@ class AsyncSnippetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(typing.List[Snippet], _response_json)  # type: ignore
-        if "error" in _response_json:
-            if _response_json["error"] == "UnauthorizedError":
-                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "UserNotInOrgError":
-                raise UserNotInOrgError()
-            if _response_json["error"] == "UnavailableError":
-                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdRequiredError":
-                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdRequiredError":
-                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdAndApiIdNotFound":
-                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdNotFound":
-                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdNotFound":
-                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "EndpointNotFound":
-                raise EndpointNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "SDKNotFound":
-                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)
 
     async def load(
@@ -289,7 +312,9 @@ class AsyncSnippetsClient:
         page: typing.Optional[int] = None,
         org_id: typing.Optional[OrgId] = OMIT,
         api_id: typing.Optional[ApiId] = OMIT,
-        sdks: typing.Optional[typing.List[Sdk]] = OMIT,
+        sdks: typing.Optional[typing.Sequence[Sdk]] = OMIT,
+        load_level: typing.Optional[SnippetLoadLevel] = OMIT,
+        request_options: typing.Optional[RequestOptions] = None,
     ) -> SnippetsPage:
         """
         Parameters:
@@ -300,11 +325,17 @@ class AsyncSnippetsClient:
 
             - api_id: typing.Optional[ApiId]. If you have more than one API, you must specify its ID.
 
-            - sdks: typing.Optional[typing.List[Sdk]]. The SDKs for which to load snippets. If unspecified,
-                                                       snippets for the latest published SDKs will be returned.
-                                                       ---
+            - sdks: typing.Optional[typing.Sequence[Sdk]]. The SDKs for which to load snippets. If unspecified,
+                                                           snippets for the latest published SDKs will be returned.
+
+            - load_level: typing.Optional[SnippetLoadLevel]. The level of detail to load for the snippet. If unspecified,
+                                                             the full snippet will be returned.
+
+            - request_options: typing.Optional[RequestOptions]. Request-specific configuration.
+        ---
         from fern.client import AsyncFern
-        from fern.resources.snippets import Sdk_Python
+
+        from fern import Sdk_Python
 
         client = AsyncFern(
             token="YOUR_TOKEN",
@@ -329,13 +360,42 @@ class AsyncSnippetsClient:
             _request["apiId"] = api_id
         if sdks is not OMIT:
             _request["sdks"] = sdks
+        if load_level is not OMIT:
+            _request["loadLevel"] = load_level
         _response = await self._client_wrapper.httpx_client.request(
             "POST",
             urllib.parse.urljoin(f"{self._client_wrapper.get_base_url()}/", "snippets/load"),
-            params=remove_none_from_dict({"page": page}),
-            json=jsonable_encoder(_request),
-            headers=self._client_wrapper.get_headers(),
-            timeout=60,
+            params=jsonable_encoder(
+                remove_none_from_dict(
+                    {
+                        "page": page,
+                        **(
+                            request_options.get("additional_query_parameters", {})
+                            if request_options is not None
+                            else {}
+                        ),
+                    }
+                )
+            ),
+            json=jsonable_encoder(_request)
+            if request_options is None or request_options.get("additional_body_parameters") is None
+            else {
+                **jsonable_encoder(_request),
+                **(jsonable_encoder(remove_none_from_dict(request_options.get("additional_body_parameters", {})))),
+            },
+            headers=jsonable_encoder(
+                remove_none_from_dict(
+                    {
+                        **self._client_wrapper.get_headers(),
+                        **(request_options.get("additional_headers", {}) if request_options is not None else {}),
+                    }
+                )
+            ),
+            timeout=request_options.get("timeout_in_seconds")
+            if request_options is not None and request_options.get("timeout_in_seconds") is not None
+            else 60,
+            retries=0,
+            max_retries=request_options.get("max_retries") if request_options is not None else 0,  # type: ignore
         )
         try:
             _response_json = _response.json()
@@ -343,25 +403,4 @@ class AsyncSnippetsClient:
             raise ApiError(status_code=_response.status_code, body=_response.text)
         if 200 <= _response.status_code < 300:
             return pydantic.parse_obj_as(SnippetsPage, _response_json)  # type: ignore
-        if "error" in _response_json:
-            if _response_json["error"] == "UnauthorizedError":
-                raise UnauthorizedError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "UserNotInOrgError":
-                raise UserNotInOrgError()
-            if _response_json["error"] == "UnavailableError":
-                raise UnavailableError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "InvalidPageError":
-                raise InvalidPageError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdRequiredError":
-                raise ApiIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdRequiredError":
-                raise OrgIdRequiredError(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdAndApiIdNotFound":
-                raise OrgIdAndApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "OrgIdNotFound":
-                raise OrgIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "ApiIdNotFound":
-                raise ApiIdNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
-            if _response_json["error"] == "SDKNotFound":
-                raise SdkNotFound(pydantic.parse_obj_as(str, _response_json["content"]))  # type: ignore
         raise ApiError(status_code=_response.status_code, body=_response_json)

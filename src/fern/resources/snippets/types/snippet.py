@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import typing
 
-import typing_extensions
-
 from .go_snippet import GoSnippet
 from .java_snippet import JavaSnippet
 from .python_snippet import PythonSnippet
@@ -13,39 +11,43 @@ from .type_script_snippet import TypeScriptSnippet
 
 
 class Snippet_Typescript(TypeScriptSnippet):
-    type: typing_extensions.Literal["typescript"]
+    type: typing.Literal["typescript"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class Snippet_Python(PythonSnippet):
-    type: typing_extensions.Literal["python"]
+    type: typing.Literal["python"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class Snippet_Java(JavaSnippet):
-    type: typing_extensions.Literal["java"]
+    type: typing.Literal["java"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class Snippet_Go(GoSnippet):
-    type: typing_extensions.Literal["go"]
+    type: typing.Literal["go"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 Snippet = typing.Union[Snippet_Typescript, Snippet_Python, Snippet_Java, Snippet_Go]

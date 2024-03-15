@@ -4,8 +4,6 @@ from __future__ import annotations
 
 import typing
 
-import typing_extensions
-
 from .go_sdk import GoSdk
 from .java_sdk import JavaSdk
 from .python_sdk import PythonSdk
@@ -13,39 +11,43 @@ from .type_script_sdk import TypeScriptSdk
 
 
 class Sdk_Typescript(TypeScriptSdk):
-    type: typing_extensions.Literal["typescript"]
+    type: typing.Literal["typescript"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class Sdk_Python(PythonSdk):
-    type: typing_extensions.Literal["python"]
+    type: typing.Literal["python"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class Sdk_Go(GoSdk):
-    type: typing_extensions.Literal["go"]
+    type: typing.Literal["go"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 class Sdk_Java(JavaSdk):
-    type: typing_extensions.Literal["java"]
+    type: typing.Literal["java"]
 
     class Config:
         frozen = True
         smart_union = True
         allow_population_by_field_name = True
+        populate_by_name = True
 
 
 Sdk = typing.Union[Sdk_Typescript, Sdk_Python, Sdk_Go, Sdk_Java]
