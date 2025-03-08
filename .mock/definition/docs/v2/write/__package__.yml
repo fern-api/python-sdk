@@ -1,0 +1,128 @@
+imports:
+  rootCommons: ../../../commons.yml
+  v1DocsWrite: ../../v1/write/__package__.yml
+service:
+  base-path: /v2/registry/docs
+  auth: false
+  endpoints:
+    startDocsRegister:
+      auth: true
+      path: /v2/init
+      request:
+        body:
+          properties:
+            domain:
+              type: string
+              docs: A `buildwithfern.com` url
+            customDomains: list<string>
+            authConfig: optional<AuthConfig>
+            orgId: rootCommons.OrgId
+            apiId:
+              type: rootCommons.ApiId
+              availability: deprecated
+            filepaths:
+              type: list<v1DocsWrite.FilePath>
+              docs: Relative filepath from docs folder.
+            images: optional<list<ImageFilePath>>
+        name: StartDocsRegisterRequestV2
+      response: v1DocsWrite.StartDocsRegisterResponse
+      errors:
+        - rootCommons.UnauthorizedError
+        - rootCommons.UnavailableError
+        - rootCommons.UserNotInOrgError
+        - InvalidDomainError
+        - InvalidCustomDomainError
+        - rootCommons.DomainBelongsToAnotherOrgError
+    startDocsPreviewRegister:
+      auth: true
+      path: /preview/init
+      request:
+        body:
+          properties:
+            basePath: optional<string>
+            orgId: rootCommons.OrgId
+            authConfig: optional<AuthConfig>
+            filepaths:
+              type: list<v1DocsWrite.FilePath>
+              docs: Relative filepath from docs folder.
+            images: optional<list<ImageFilePath>>
+        name: StartDocsPreviewRegisterRequestV2
+      response: StartDocsPreviewRegisterResponse
+      errors:
+        - rootCommons.UnauthorizedError
+        - rootCommons.UnavailableError
+        - rootCommons.UserNotInOrgError
+        - InvalidDomainError
+    finishDocsRegister:
+      auth: true
+      method: POST
+      path: /register/{docsRegistrationId}
+      path-parameters:
+        docsRegistrationId: v1DocsWrite.DocsRegistrationId
+      request:
+        body:
+          properties:
+            docsDefinition: v1DocsWrite.DocsDefinition
+        name: RegisterDocsRequest
+      errors:
+        - rootCommons.UnauthorizedError
+        - rootCommons.UserNotInOrgError
+        - v1DocsWrite.DocsRegistrationIdNotFound
+    reindexAlgoliaSearchRecords:
+      method: POST
+      path: /algolia/reindex
+      request:
+        body:
+          properties:
+            url: string
+        name: ReindexAlgoliaRecordsRequest
+      errors:
+        - DocsNotFoundError
+        - ReindexNotAllowedError
+  audiences:
+    - write
+types:
+  ImageFilePath:
+    properties:
+      filePath: v1DocsWrite.FilePath
+      width: double
+      height: double
+      blurDataUrl: optional<string>
+      alt: optional<string>
+  StartDocsPreviewRegisterResponse:
+    extends: v1DocsWrite.StartDocsRegisterResponse
+    properties:
+      previewUrl: string
+  InvalidDomainErrorBody:
+    properties:
+      requiredDomainSuffix:
+        type: string
+        docs: >-
+          Value the domain should end with (i.e. docs.buildwithfern.com or
+          dev.docs.buildwithfern.com)
+  InvliadCustomDomainErrorBody:
+    properties:
+      overlappingDomains: list<OverlappingCustomDomains>
+  OverlappingCustomDomains: list<string>
+  AuthConfig:
+    union:
+      public: PublicAuthConfig
+      private: PrivateAuthConfig
+  PublicAuthConfig:
+    properties: {}
+    docs: Allow anyone to access the docs.
+  PrivateAuthConfig:
+    properties:
+      authType: literal<"sso">
+    docs: Use SSO to authenticate users before they can access the docs.
+errors:
+  InvalidDomainError:
+    status-code: 400
+  InvalidCustomDomainError:
+    status-code: 400
+  DocsNotFoundError:
+    status-code: 404
+    docs: Docs not found.
+  ReindexNotAllowedError:
+    status-code: 403
+    docs: Reindexing is not allowed for this domain.

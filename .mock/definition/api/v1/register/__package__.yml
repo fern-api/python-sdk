@@ -1,0 +1,148 @@
+imports:
+  endpoint: endpoint.yml
+  type: type.yml
+  rootCommons: ../../../commons.yml
+  commons: commons.yml
+  webhook: webhook.yml
+  websocket: websocket.yml
+service:
+  auth: true
+  base-path: /registry/api
+  endpoints:
+    registerApiDefinition:
+      path: /register
+      method: POST
+      request:
+        body:
+          properties:
+            orgId: rootCommons.OrgId
+            apiId: rootCommons.ApiId
+            definition: ApiDefinition
+            sources: optional<map<SourceId, Source>>
+        name: RegisterApiDefinitionRequest
+      response: RegisterApiDefinitionResponse
+      errors:
+        - rootCommons.UnauthorizedError
+        - rootCommons.UserNotInOrgError
+  audiences:
+    - write
+types:
+  RegisterApiDefinitionResponse:
+    properties:
+      apiDefinitionId: rootCommons.ApiDefinitionId
+      sources: optional<map<SourceId, SourceUpload>>
+  ApiDefinition:
+    properties:
+      rootPackage: ApiDefinitionPackage
+      types: map<type.TypeId, type.TypeDefinition>
+      subpackages: map<SubpackageId, ApiDefinitionSubpackage>
+      auth: optional<ApiAuth>
+      globalHeaders: optional<list<endpoint.Header>>
+      snippetsConfiguration: optional<SnippetsConfig>
+      navigation:
+        type: optional<ApiNavigationConfigRoot>
+        docs: Use the docs navigation instead.
+        availability: deprecated
+  ApiNavigationConfigRoot:
+    properties:
+      items: list<ApiNavigationConfigItem>
+  ApiNavigationConfigItem:
+    union:
+      subpackage: ApiNavigationConfigSubpackage
+      endpointId: endpoint.EndpointId
+      websocketId: websocket.WebSocketId
+      webhookId: webhook.WebhookId
+  ApiNavigationConfigSubpackage:
+    properties:
+      subpackageId: SubpackageId
+      items: list<ApiNavigationConfigItem>
+  SourceId: string
+  Source:
+    union:
+      openapi: {}
+      asyncapi: {}
+      proto: {}
+  SourceUpload:
+    properties:
+      uploadUrl:
+        type: string
+        docs: The presigned URL to upload the source files to.
+      downloadUrl:
+        type: string
+        docs: The presigned URL to download the source files from.
+  SnippetsConfig:
+    properties:
+      typescriptSdk: optional<TypescriptPackage>
+      pythonSdk: optional<PythonPackage>
+      goSdk: optional<GoModule>
+      javaSdk: optional<JavaCoordinate>
+      rubySdk: optional<RubyGem>
+  TypescriptPackage:
+    properties:
+      package: string
+      version: optional<string>
+  PythonPackage:
+    properties:
+      package: string
+      version: optional<string>
+  GoModule:
+    properties:
+      githubRepo: string
+      version: optional<string>
+  JavaCoordinate:
+    properties:
+      coordinate: string
+      version: optional<string>
+  RubyGem:
+    properties:
+      gem: string
+      version: optional<string>
+  ApiDefinitionPackage:
+    properties:
+      endpoints: list<endpoint.EndpointDefinition>
+      websockets: optional<list<websocket.WebSocketChannel>>
+      webhooks: optional<list<webhook.WebhookDefinition>>
+      types: list<type.TypeId>
+      subpackages: list<SubpackageId>
+      pointsTo:
+        type: optional<SubpackageId>
+        docs: >
+          if present, this package should be replaced with the provided
+          subpackage
+
+          in the docs navigation.
+  ApiDefinitionSubpackage:
+    extends:
+      - ApiDefinitionPackage
+      - commons.WithDescription
+    properties:
+      subpackageId: SubpackageId
+      name: string
+      displayName: optional<string>
+  SubpackageId: string
+  ApiAuth:
+    union:
+      bearerAuth: BearerAuth
+      basicAuth: BasicAuth
+      header: HeaderAuth
+  BasicAuth:
+    properties:
+      usernameName: optional<string>
+      passwordName: optional<string>
+  BearerAuth:
+    properties:
+      tokenName: optional<string>
+  HeaderAuth:
+    properties:
+      nameOverride: optional<string>
+      headerWireValue: string
+      prefix:
+        type: optional<string>
+        docs: The prefix that comes before the header
+  EndpointExampleGenerationErrorBody:
+    properties:
+      endpointId: string
+errors:
+  EndpointExampleGenerationError:
+    status-code: 500
+    type: EndpointExampleGenerationErrorBody

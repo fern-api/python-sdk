@@ -1,0 +1,115 @@
+imports:
+  rootCommons: ../../../commons.yml
+  v1DocsRead: ../../v1/read/__package__.yml
+  apiReadV1: ../../../api/v1/read/__package__.yml
+service:
+  base-path: /v2/registry/docs
+  auth: false
+  endpoints:
+    getOrganizationForUrl:
+      method: POST
+      path: /organization-for-url
+      request:
+        body:
+          properties:
+            url: string
+        name: GetOrganizationForUrlRequest
+      response: rootCommons.OrgId
+      errors:
+        - DomainNotRegisteredError
+    getDocsForUrl:
+      method: POST
+      path: /load-with-url
+      request:
+        body:
+          properties:
+            url: string
+        name: LoadDocsForUrlRequest
+      response: LoadDocsForUrlResponse
+      errors:
+        - DomainNotRegisteredError
+        - rootCommons.UnauthorizedError
+    getPrivateDocsForUrl:
+      method: POST
+      auth: true
+      path: /private/load-with-url
+      request:
+        body:
+          properties:
+            url: string
+        name: LoadPrivateDocsForUrlRequest
+      response: LoadDocsForUrlResponse
+      errors:
+        - DomainNotRegisteredError
+        - rootCommons.UnauthorizedError
+    listAllDocsUrls:
+      method: GET
+      auth: true
+      path: /urls/list
+      request:
+        query-parameters:
+          page: optional<integer>
+          limit: optional<integer>
+          custom:
+            type: optional<boolean>
+            docs: If true, filters to only docs with a custom URL.
+        name: ListAllDocsUrlsRequest
+      response: ListAllDocsUrlsResponse
+      errors:
+        - rootCommons.UnauthorizedError
+      docs: Returns a list of all public docs.
+    getDocsConfigById:
+      method: GET
+      path: /{docsConfigId}
+      path-parameters:
+        docsConfigId: rootCommons.DocsConfigId
+      response: GetDocsConfigByIdResponse
+      errors:
+        - DocsDefinitionNotFoundError
+      docs: |
+        Loads the Docs Config and any referenced APIs by ID.
+    getSearchApiKeyForIndexSegment:
+      method: POST
+      path: /search-api-key-with-index-segment
+      request:
+        body:
+          properties:
+            indexSegmentId: string
+        name: GetSearchApiKeyForIndexSegmentRequest
+      response: GetSearchApiKeyForIndexSegmentResponse
+      errors:
+        - IndexSegmentNotFoundError
+  audiences:
+    - read
+types:
+  GetDocsConfigByIdResponse:
+    properties:
+      docsConfig: v1DocsRead.DocsConfig
+      apis: map<rootCommons.ApiDefinitionId, apiReadV1.ApiDefinition>
+  LoadDocsForUrlResponse:
+    properties:
+      baseUrl: BaseUrl
+      definition: v1DocsRead.DocsDefinition
+      lightModeEnabled: boolean
+  GetSearchApiKeyForIndexSegmentResponse:
+    properties:
+      searchApiKey: string
+  BaseUrl:
+    properties:
+      domain: string
+      basePath: optional<string>
+  ListAllDocsUrlsResponse:
+    properties:
+      urls: list<DocsDomainItem>
+  DocsDomainItem:
+    extends: BaseUrl
+    properties:
+      organizationId: rootCommons.OrgId
+      updatedAt: datetime
+errors:
+  DocsDefinitionNotFoundError:
+    status-code: 404
+  DomainNotRegisteredError:
+    status-code: 404
+  IndexSegmentNotFoundError:
+    status-code: 404

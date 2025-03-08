@@ -4,7 +4,7 @@ import datetime as dt
 import typing
 
 from ....core.datetime_utils import serialize_datetime
-from .endpoint_path import EndpointPath
+from ...commons.types.endpoint_path import EndpointPath
 from .snippets_by_endpoint_method import SnippetsByEndpointMethod
 
 try:
@@ -21,7 +21,7 @@ class SnippetsPage(pydantic.BaseModel):
 
     snippets: typing.Dict[EndpointPath, SnippetsByEndpointMethod] = pydantic.Field()
     """
-    The snippets are returned as a map of endpoint path (e.g. `/api/users`)
+    The snippets are returned as a map of endpoint path (e.g. `/api/users`) 
     to a map of endpoint method (e.g. `POST`) to snippets.
     """
 

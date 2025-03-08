@@ -1,0 +1,236 @@
+imports:
+  type: type.yml
+  commons: commons.yml
+types:
+  EnvironmentId: string
+  EndpointId: string
+  EndpointDefinition:
+    extends:
+      - commons.WithDescription
+      - commons.WithAvailability
+    properties:
+      auth: optional<boolean>
+      defaultEnvironment: optional<EnvironmentId>
+      environments: optional<list<Environment>>
+      method: HttpMethod
+      id:
+        type: EndpointId
+        docs: This is the name of the endpoint.
+      originalEndpointId:
+        type: optional<string>
+        docs: >
+          The ID for the endpoint as declared within the IR, this is a unique
+          name for the endpoint, whereas
+
+          path and method are not (specifically for the fern definition,
+          consider chat and chat stream).
+
+          This is optional to remain backcompat with old definitions of yore.
+      name: optional<string>
+      path: EndpointPath
+      queryParameters: list<QueryParameter>
+      headers: list<Header>
+      request: optional<HttpRequest>
+      response: optional<HttpResponse>
+      errors:
+        type: optional<list<ErrorDeclaration>>
+        availability: deprecated
+      errorsV2: optional<list<ErrorDeclarationV2>>
+      examples: list<ExampleEndpointCall>
+  Environment:
+    properties:
+      id: EnvironmentId
+      baseUrl: string
+  HttpMethod:
+    enum:
+      - GET
+      - POST
+      - PUT
+      - PATCH
+      - DELETE
+  EndpointPath:
+    properties:
+      parts: list<EndpointPathPart>
+      pathParameters: list<PathParameter>
+  EndpointPathPart:
+    union:
+      literal: string
+      pathParameter: PathParameterKey
+  PathParameter:
+    extends:
+      - commons.WithDescription
+      - commons.WithAvailability
+    properties:
+      key: PathParameterKey
+      type: type.TypeReference
+  PathParameterKey: string
+  QueryParameter:
+    extends:
+      - commons.WithDescription
+      - commons.WithAvailability
+    properties:
+      key: string
+      type: type.TypeReference
+  Header:
+    extends:
+      - commons.WithDescription
+      - commons.WithAvailability
+    properties:
+      key: string
+      type: type.TypeReference
+  HttpRequest:
+    extends: commons.WithDescription
+    properties:
+      type: HttpRequestBodyShape
+  HttpRequestBodyShape:
+    union:
+      json: JsonRequestBody
+      formData: type.FormDataRequest
+      bytes: type.BytesRequest
+      object:
+        type: type.ObjectType
+      reference:
+        type: type.TypeReference
+      fileUpload:
+        type: optional<type.FormDataRequest>
+        docs: >-
+          `fileUpload` is optional only to be backwards compatible. It should be
+          required.
+  JsonRequestBody:
+    properties:
+      contentType: string
+      shape: JsonBodyShape
+  JsonBodyShape:
+    union:
+      object: type.ObjectType
+      reference: type.TypeReference
+  HttpResponse:
+    extends: commons.WithDescription
+    properties:
+      type: HttpResponseBodyShape
+      statusCode:
+        type: optional<integer>
+        docs: Defaults to 200
+  ErrorDeclaration:
+    extends:
+      - commons.WithDescription
+      - commons.WithAvailability
+    properties:
+      type: optional<type.TypeReference>
+      statusCode: integer
+  ErrorDeclarationV2:
+    extends:
+      - commons.WithDescription
+      - commons.WithAvailability
+    properties:
+      type: optional<type.TypeShape>
+      statusCode: integer
+      name: optional<string>
+      examples: optional<list<ErrorExample>>
+  HttpResponseBodyShape:
+    union:
+      object: type.ObjectType
+      reference: type.TypeReference
+      fileDownload: FileDownloadResponseBodyShape
+      streamingText: {}
+      stream: StreamResponseV2
+      streamCondition:
+        type: StreamConditionResponse
+        docs: |
+          A response that can either be streaming or REST
+  FileDownloadResponseBodyShape:
+    properties:
+      contentType: optional<string>
+  StreamResponseV2:
+    properties:
+      terminator:
+        type: optional<string>
+        docs: |
+          The terminator for each message. For example, for OpenAPI 
+          the terminator is [DATA].
+      shape: JsonBodyShape
+  StreamConditionResponse:
+    properties:
+      response: NonStreamResponse
+      streamResponse: StreamResponse
+      streamCondition: StreamCondition
+    availability: deprecated
+  NonStreamResponse:
+    properties:
+      shape: JsonBodyShape
+      examples: list<ExampleEndpointCall>
+    availability: deprecated
+  StreamResponse:
+    properties:
+      shape: JsonBodyShape
+      examples: list<ExampleEndpointCall>
+    availability: deprecated
+  StreamCondition:
+    union:
+      booleanRequestProperty: type.PropertyKey
+    availability: deprecated
+  ExampleEndpointCall:
+    extends: commons.WithDescription
+    properties:
+      name: optional<string>
+      path: string
+      pathParameters: map<PathParameterKey, unknown>
+      queryParameters: map<string, unknown>
+      headers: map<string, unknown>
+      requestBody:
+        type: unknown
+        availability: deprecated
+      requestBodyV3: optional<ExampleEndpointRequest>
+      responseStatusCode: integer
+      responseBody:
+        type: unknown
+        availability: deprecated
+      responseBodyV3: optional<ExampleEndpointResponse>
+      codeSamples: optional<list<CustomCodeSample>>
+  CustomCodeSample:
+    extends: commons.WithDescription
+    properties:
+      language: string
+      code: string
+      name: optional<string>
+      install: optional<string>
+    docs: Hand-written code samples
+  ExampleEndpointRequest:
+    union:
+      json: unknown
+      form: map<string, FormValue>
+      bytes: BytesValue
+  FormValue:
+    union:
+      json: unknown
+      filename: string
+      filenames: list<string>
+      filenameWithData: FilenameWithData
+      filenamesWithData: list<FilenameWithData>
+  BytesValue:
+    union:
+      base64: string
+  FilenameWithData:
+    properties:
+      filename: string
+      data: FileId
+  FileId: string
+  ExampleEndpointResponse:
+    union:
+      json: unknown
+      filename: string
+      stream: list<unknown>
+      sse: list<ExampleServerSentEvent>
+  ExampleServerSentEvent:
+    properties:
+      event: string
+      data: unknown
+  ErrorExample:
+    extends:
+      - commons.WithDescription
+    properties:
+      name: optional<string>
+      responseBody: ExampleErrorResponse
+  ExampleErrorResponse:
+    union:
+      json: unknown

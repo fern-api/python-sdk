@@ -4,13 +4,14 @@ from __future__ import annotations
 
 import typing
 
-from .go_sdk import GoSdk
-from .java_sdk import JavaSdk
-from .python_sdk import PythonSdk
-from .type_script_sdk import TypeScriptSdk
+from .go_sdk_request import GoSdkRequest
+from .java_sdk_request import JavaSdkRequest
+from .python_sdk_request import PythonSdkRequest
+from .ruby_sdk_request import RubySdkRequest
+from .type_script_sdk_request import TypeScriptSdkRequest
 
 
-class Sdk_Typescript(TypeScriptSdk):
+class SdkRequest_Typescript(TypeScriptSdkRequest):
     type: typing.Literal["typescript"]
 
     class Config:
@@ -20,7 +21,7 @@ class Sdk_Typescript(TypeScriptSdk):
         populate_by_name = True
 
 
-class Sdk_Python(PythonSdk):
+class SdkRequest_Python(PythonSdkRequest):
     type: typing.Literal["python"]
 
     class Config:
@@ -30,7 +31,7 @@ class Sdk_Python(PythonSdk):
         populate_by_name = True
 
 
-class Sdk_Go(GoSdk):
+class SdkRequest_Go(GoSdkRequest):
     type: typing.Literal["go"]
 
     class Config:
@@ -40,7 +41,17 @@ class Sdk_Go(GoSdk):
         populate_by_name = True
 
 
-class Sdk_Java(JavaSdk):
+class SdkRequest_Ruby(RubySdkRequest):
+    type: typing.Literal["ruby"]
+
+    class Config:
+        frozen = True
+        smart_union = True
+        allow_population_by_field_name = True
+        populate_by_name = True
+
+
+class SdkRequest_Java(JavaSdkRequest):
     type: typing.Literal["java"]
 
     class Config:
@@ -50,4 +61,4 @@ class Sdk_Java(JavaSdk):
         populate_by_name = True
 
 
-Sdk = typing.Union[Sdk_Typescript, Sdk_Python, Sdk_Go, Sdk_Java]
+SdkRequest = typing.Union[SdkRequest_Typescript, SdkRequest_Python, SdkRequest_Go, SdkRequest_Ruby, SdkRequest_Java]

@@ -1,0 +1,54 @@
+imports:
+  commons: commons.yml
+types:
+  GenerateTokenResponse:
+    properties:
+      token:
+        type: string
+        docs: The generated token
+      id:
+        type: string
+        docs: The ID of the generated token.
+service:
+  auth: true
+  base-path: /tokens
+  endpoints:
+    generate:
+      path: /generate
+      method: POST
+      auth: false
+      request:
+        body:
+          properties:
+            orgId:
+              type: commons.OrgId
+              docs: |
+                The organization to generate a token for.
+            scope:
+              type: string
+              docs: |
+                The scope of the token. Valid scopes include: 
+                  - admin 
+                  - sdk:read:{package_name}
+        name: GenerateTokenRequest
+      response: GenerateTokenResponse
+      display-name: Generate Token
+      docs: Generate a token
+    revoke:
+      path: /revoke
+      method: POST
+      auth: false
+      request:
+        body:
+          properties:
+            orgId:
+              type: commons.OrgId
+              docs: |
+                The organization to create snippets for.
+            tokenId:
+              type: commons.TokenId
+        name: RevokeTokenRequest
+      display-name: Revoke Token
+      docs: Revoke a token
+  audiences:
+    - external

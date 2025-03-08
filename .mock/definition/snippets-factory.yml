@@ -1,0 +1,101 @@
+imports:
+  commons: commons.yml
+  snippets: snippets.yml
+service:
+  auth: true
+  base-path: /snippets
+  endpoints:
+    createSnippetsForSDK:
+      path: /create
+      method: POST
+      request:
+        body:
+          properties:
+            orgId:
+              type: commons.OrgId
+              docs: |
+                The organization to create snippets for.
+            apiId:
+              type: commons.ApiId
+              docs: |
+                The API name.
+            snippets: SDKSnippetsCreate
+        name: CreateSnippetRequest
+      errors:
+        - commons.UnauthorizedError
+        - commons.UserNotInOrgError
+        - snippets.OrgIdNotFound
+        - snippets.SDKNotFound
+      display-name: Store snippets
+      docs: Store endpoint snippets for a particular SDK.
+      audiences:
+        - fiddle
+types:
+  SDKSnippetsCreate:
+    union:
+      typescript: TypescriptSDKSnippetsCreate
+      python: PythonSDKSnippetCreate
+      go: GoSDKSnippetsCreate
+      java: JavaSDKSnippetsCreate
+      ruby: RubySDKSnippetsCreate
+  TypescriptSDKSnippetsCreate:
+    properties:
+      sdk: snippets.TypeScriptSDK
+      snippets: list<SingleTypescriptSnippetCreate>
+  PythonSDKSnippetCreate:
+    properties:
+      sdk: snippets.PythonSDK
+      snippets: list<SinglePythonSnippetCreate>
+  GoSDKSnippetsCreate:
+    properties:
+      sdk: snippets.GoSDK
+      snippets: list<SingleGoSnippetCreate>
+  RubySDKSnippetsCreate:
+    properties:
+      sdk: snippets.RubySDK
+      snippets: list<SingleRubySnippetCreate>
+  JavaSDKSnippetsCreate:
+    properties:
+      sdk: snippets.JavaSDK
+      snippets: list<SingleJavaSnippetCreate>
+  BaseSnippetCreate:
+    properties:
+      endpoint: commons.EndpointIdentifier
+      exampleIdentifier: optional<string>
+  SingleTypescriptSnippetCreate:
+    extends: BaseSnippetCreate
+    properties:
+      snippet: TypeScriptSnippetCode
+  SinglePythonSnippetCreate:
+    extends: BaseSnippetCreate
+    properties:
+      snippet: PythonSnippetCode
+  SingleGoSnippetCreate:
+    extends: BaseSnippetCreate
+    properties:
+      snippet: GoSnippetCode
+  SingleRubySnippetCreate:
+    extends: BaseSnippetCreate
+    properties:
+      snippet: RubySnippetCode
+  SingleJavaSnippetCreate:
+    extends: BaseSnippetCreate
+    properties:
+      snippet: JavaSnippetCode
+  TypeScriptSnippetCode:
+    properties:
+      client: string
+  PythonSnippetCode:
+    properties:
+      async_client: string
+      sync_client: string
+  GoSnippetCode:
+    properties:
+      client: string
+  RubySnippetCode:
+    properties:
+      client: string
+  JavaSnippetCode:
+    properties:
+      async_client: string
+      sync_client: string

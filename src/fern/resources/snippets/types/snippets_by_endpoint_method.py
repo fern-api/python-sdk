@@ -2,7 +2,7 @@
 
 import typing
 
-from .endpoint_method import EndpointMethod
+from ...commons.types.endpoint_method import EndpointMethod
 from .snippet import Snippet
 
 SnippetsByEndpointMethod = typing.Dict[EndpointMethod, typing.List[Snippet]]

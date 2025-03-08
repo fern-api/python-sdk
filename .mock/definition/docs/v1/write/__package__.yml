@@ -1,0 +1,363 @@
+imports:
+  rootCommons: ../../../commons.yml
+  commons: ../commons/commons.yml
+  navigation: ../../../navigation/__package__.yml
+service:
+  base-path: /registry/docs
+  auth: false
+  endpoints:
+    startDocsRegister:
+      auth: true
+      method: POST
+      path: /init
+      request:
+        body:
+          properties:
+            domain: string
+            orgId: rootCommons.OrgId
+            filepaths:
+              type: list<FilePath>
+              docs: Relative filepath from docs folder.
+        name: StartDocsRegisterRequest
+      response: StartDocsRegisterResponse
+    finishDocsRegister:
+      auth: true
+      method: POST
+      path: /register/{docsRegistrationId}
+      path-parameters:
+        docsRegistrationId: DocsRegistrationId
+      request:
+        body:
+          properties:
+            docsDefinition: DocsDefinition
+        name: RegisterDocsRequest
+      errors:
+        - rootCommons.UnauthorizedError
+        - rootCommons.UserNotInOrgError
+        - DocsRegistrationIdNotFound
+  audiences:
+    - write
+types:
+  FilePath:
+    type: string
+    docs: >-
+      Each string is a unique key for the file. You can use the filepath as a
+      key.
+  DocsRegistrationId: string
+  StartDocsRegisterResponse:
+    properties:
+      docsRegistrationId: DocsRegistrationId
+      uploadUrls: map<FilePath, FileS3UploadUrl>
+  FileS3UploadUrl:
+    properties:
+      uploadUrl: string
+      fileId:
+        type: commons.FileId
+        docs: >
+          When reading docs we will return a map<commons.FileId, URL> that you
+          can use to look up the docs.
+  Height: double
+  DocsDefinition:
+    properties:
+      pages: map<commons.PageId, PageContent>
+      config: DocsConfig
+      jsFiles:
+        type: optional<map<string, string>>
+        docs: >
+          A map of file names to their contents. 
+
+          The key is the absolute path file name and the value is the file
+          contents.
+  PageContent:
+    properties:
+      markdown: string
+      editThisPageUrl: optional<commons.Url>
+  DocsConfig:
+    properties:
+      title: optional<string>
+      defaultLanguage: optional<commons.ProgrammingLanguage>
+      analyticsConfig: optional<commons.AnalyticsConfig>
+      navigation: NavigationConfig
+      navbarLinks: optional<list<commons.NavbarLink>>
+      footerLinks: optional<list<commons.FooterLink>>
+      logoHeight: optional<Height>
+      logoHref: optional<commons.Url>
+      favicon: optional<commons.FileId>
+      metadata: optional<commons.MetadataConfig>
+      redirects: optional<list<commons.RedirectConfig>>
+      colorsV3: optional<ColorsConfigV3>
+      layout: optional<commons.DocsLayoutConfig>
+      typographyV2: optional<commons.DocsTypographyConfigV2>
+      integrations: optional<commons.IntegrationsConfig>
+      css: optional<commons.CssConfig>
+      js: optional<commons.JsConfig>
+      backgroundImage: optional<commons.FileId>
+      logoV2: optional<commons.ThemedFileId>
+      logo:
+        type: optional<commons.FileId>
+        availability: deprecated
+      colors:
+        type: optional<commons.ColorsConfig>
+        availability: deprecated
+      colorsV2:
+        type: optional<commons.ColorsConfigV2>
+        availability: deprecated
+      typography:
+        type: optional<commons.DocsTypographyConfig>
+        availability: deprecated
+  ColorsConfigV3:
+    union:
+      dark: ThemeConfig
+      light: ThemeConfig
+      darkAndLight: DarkAndLightModeConfig
+  ThemeConfig:
+    properties:
+      logo: optional<commons.FileId>
+      backgroundImage: optional<commons.FileId>
+      accentPrimary: commons.RgbaColor
+      background: optional<commons.RgbaColor>
+      border: optional<commons.RgbaColor>
+      sidebarBackground: optional<commons.RgbaColor>
+      headerBackground: optional<commons.RgbaColor>
+      cardBackground: optional<commons.RgbaColor>
+  DarkAndLightModeConfig:
+    properties:
+      dark: ThemeConfig
+      light: ThemeConfig
+  NavigationConfig:
+    discriminated: false
+    union:
+      - UnversionedNavigationConfig
+      - VersionedNavigationConfig
+    availability: deprecated
+  UnversionedNavigationConfig:
+    discriminated: false
+    union:
+      - UnversionedTabbedNavigationConfig
+      - UnversionedUntabbedNavigationConfig
+  UnversionedTabbedNavigationConfig:
+    properties:
+      tabs:
+        type: optional<list<NavigationTab>>
+        availability: deprecated
+      tabsV2: optional<list<NavigationTabV2>>
+      landingPage: optional<PageMetadata>
+  NavigationTab:
+    discriminated: false
+    union:
+      - NavigationTabGroup
+      - NavigationTabLink
+    availability: deprecated
+  NavigationTabV2:
+    union:
+      group: NavigationTabGroup
+      link: NavigationTabLink
+      changelog: ChangelogSectionV2
+      changelogV3: ChangelogSectionV3
+  NavigationTabGroup:
+    extends: NavigationNodeMetadata
+    properties:
+      title: string
+      items: list<NavigationItem>
+      skipUrlSlug: optional<boolean>
+  NavigationTabLink:
+    properties:
+      title: string
+      icon: optional<string>
+      url: string
+  UnversionedUntabbedNavigationConfig:
+    properties:
+      items: list<NavigationItem>
+      landingPage: optional<PageMetadata>
+  VersionedNavigationConfig:
+    properties:
+      versions: list<VersionedNavigationConfigData>
+  VersionedNavigationConfigData:
+    properties:
+      version: string
+      urlSlugOverride: optional<string>
+      availability: optional<VersionAvailability>
+      config: UnversionedNavigationConfig
+  VersionAvailability:
+    enum:
+      - Stable
+      - GenerallyAvailable
+      - Deprecated
+      - Beta
+  NavigationItem:
+    union:
+      page: PageMetadata
+      api: ApiSection
+      apiV2: ApiSectionV2
+      section: DocsSection
+      link: LinkMetadata
+      changelog: ChangelogSectionV2
+      changelogV3: ChangelogSectionV3
+  PageMetadata:
+    extends: NavigationNodeMetadata
+    properties:
+      id:
+        type: commons.PageId
+        docs: >-
+          This is a filepath relative to the fern folder, with a .md/.mdx
+          extension.
+      title: string
+  NavigationNodeMetadata:
+    properties:
+      icon: optional<string>
+      hidden: optional<boolean>
+      urlSlugOverride:
+        type: optional<string>
+        docs: >
+          Optional slug to override the generated slug, which is
+          `kebabCase(title)`. This is ignored if `fullSlug` is provided.
+      fullSlug:
+        type: optional<list<string>>
+        docs: >
+          If provided, ignores `urlSlugOverride`, and its parent slugs, and
+          instead uses `/${basepath}/${fullSlug.join('/')}` this page's
+          pathname.
+  LinkMetadata:
+    properties:
+      title: string
+      icon: optional<string>
+      url: string
+  ApiSection:
+    extends: NavigationNodeMetadata
+    properties:
+      title: string
+      api: rootCommons.ApiDefinitionId
+      artifacts:
+        type: optional<ApiArtifacts>
+        availability: deprecated
+      skipUrlSlug: optional<boolean>
+      showErrors: optional<boolean>
+      changelog:
+        type: optional<ChangelogSection>
+        availability: deprecated
+      changelogV2: optional<ChangelogSectionV2>
+      navigation: optional<ApiNavigationConfigRoot>
+      longScrolling: optional<boolean>
+      flattened: optional<boolean>
+    availability: deprecated
+  ApiSectionV2:
+    properties:
+      node: navigation.ApiReferenceNode
+  ApiNavigationConfigRoot:
+    properties:
+      summaryPageId: optional<commons.PageId>
+      items: list<ApiNavigationConfigItem>
+    availability: deprecated
+  ApiNavigationConfigItem:
+    union:
+      subpackage: ApiNavigationConfigSubpackage
+      endpointId: commons.EndpointId
+      websocketId: commons.WebSocketId
+      webhookId: commons.WebhookId
+      page: PageMetadata
+    availability: deprecated
+  ApiNavigationConfigSubpackage:
+    properties:
+      summaryPageId: optional<commons.PageId>
+      subpackageId: commons.SubpackageId
+      items: list<ApiNavigationConfigItem>
+    availability: deprecated
+  ChangelogSection:
+    properties:
+      title:
+        type: optional<string>
+        docs: >
+          Optional title for the changelog section. Defaults to "Changelog" if
+          not provided.
+      icon:
+        type: optional<string>
+        docs: Defaults to ActivityLog icon
+      hidden: optional<boolean>
+      description: optional<string>
+      pageId:
+        type: optional<string>
+        docs: >
+          Optional mdx content to display at the top of the changelog section.
+          The title and description will be parsed from the frontmatter and
+          replace the config-defined values.
+      items: list<ChangelogItem>
+      urlSlug: string
+      fullSlug: optional<list<string>>
+    availability: deprecated
+  ChangelogSectionV2:
+    extends: NavigationNodeMetadata
+    properties:
+      title: optional<string>
+      description: optional<string>
+      pageId: optional<string>
+      items: list<ChangelogItem>
+  ChangelogSectionV3:
+    properties:
+      node: navigation.ChangelogNode
+  ChangelogItem:
+    properties:
+      date: date
+      pageId: string
+      hidden: optional<boolean>
+  DocsSection:
+    extends: NavigationNodeMetadata
+    properties:
+      title: string
+      items: list<NavigationItem>
+      collapsed:
+        type: optional<boolean>
+        docs: >
+          This is only applicable to sections that are at the root level in the
+          sidebar.
+
+          If false, the section title will be displayed as a header and the
+          items will be displayed below it, and cannot be collapsed.
+      skipUrlSlug: optional<boolean>
+      overviewPageId:
+        type: optional<commons.PageId>
+        docs: >
+          If provided, clicking on this section will open this page instead of
+          the first page in the section.
+        availability: in-development
+  ApiArtifacts:
+    properties:
+      sdks: list<PublishedSdk>
+      postman: optional<PublishedPostmanCollection>
+  PublishedPostmanCollection:
+    properties:
+      url: string
+      githubRepoName: optional<string>
+  PublishedSdk:
+    union:
+      npm: NpmPackage
+      maven: MavenPackage
+      pypi: PypiPackage
+  NpmPackage:
+    properties:
+      packageName: string
+      githubRepoName: string
+      version: string
+  MavenPackage:
+    properties:
+      coordinate: string
+      githubRepoName: string
+      version: string
+  PypiPackage:
+    properties:
+      packageName: string
+      githubRepoName: string
+      version: string
+  InvalidDomainErrorBody:
+    properties:
+      requiredDomainSuffix:
+        type: string
+        docs: >-
+          Value the domain should end with (i.e. docs.buildwithfern.com or
+          dev.docs.buildwithfern.com)
+  InvliadCustomDomainErrorBody:
+    properties:
+      overlappingDomains: list<OverlappingCustomDomains>
+  OverlappingCustomDomains: list<string>
+errors:
+  DocsRegistrationIdNotFound:
+    status-code: 404

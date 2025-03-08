@@ -1,0 +1,296 @@
+types:
+  FileId: string
+  PageId: string
+  Url: string
+  SubpackageId: string
+  EndpointId: string
+  WebSocketId: string
+  WebhookId: string
+  FileIdOrUrl:
+    union:
+      fileId: FileId
+      url: Url
+  RgbaColor:
+    properties:
+      r: integer
+      g: integer
+      b: integer
+      a: optional<double>
+  ProgrammingLanguage:
+    enum:
+      - typescript
+      - javascript
+      - python
+      - java
+      - go
+      - ruby
+      - csharp
+      - nodets
+      - nodejs
+      - dotnet
+      - curl
+      - jvm
+      - ts
+      - js
+  AnalyticsConfig:
+    properties:
+      segment: optional<SegmentConfig>
+      fullstory: optional<FullStoryAnalyticsConfig>
+      intercom: optional<IntercomConfig>
+      posthog: optional<PostHogConfig>
+      gtm: optional<GTMConfig>
+      ga4: optional<GoogleAnalytics4Config>
+      amplitude: optional<AmplitudeConfig>
+      mixpanel: optional<MixpanelConfig>
+      hotjar: optional<HotJarConfig>
+      koala: optional<KoalaConfig>
+      logrocket: optional<LogRocketConfig>
+      pirsch: optional<PirschConfig>
+      plausible: optional<PlausibleConfig>
+      fathom: optional<FathomConfig>
+      clearbit: optional<ClearBitConfig>
+      heap: optional<HeapConfig>
+  SegmentConfig:
+    properties:
+      writeKey: string
+  FullStoryAnalyticsConfig:
+    properties:
+      orgId: string
+  IntercomConfig:
+    properties:
+      appId: string
+      apiBase: optional<string>
+  PostHogConfig:
+    properties:
+      apiKey: string
+      endpoint: optional<string>
+  GTMConfig:
+    properties:
+      containerId: string
+  GoogleAnalytics4Config:
+    properties:
+      measurementId: string
+  AmplitudeConfig:
+    properties:
+      apiKey: string
+  MixpanelConfig:
+    properties:
+      apiKey: string
+  HotJarConfig:
+    properties:
+      hjid: string
+      hjsv: string
+  KoalaConfig:
+    properties:
+      apiKey: string
+  LogRocketConfig:
+    properties:
+      apiKey: string
+  PirschConfig:
+    properties:
+      id: string
+  PlausibleConfig:
+    properties:
+      domain: string
+  FathomConfig:
+    properties:
+      siteId: string
+  ClearBitConfig:
+    properties:
+      apiKey: string
+  HeapConfig:
+    properties:
+      appId: string
+  DocsLayoutConfig:
+    properties:
+      pageWidth: optional<PageWidthSizeConfig>
+      contentWidth: optional<SizeConfig>
+      sidebarWidth: optional<SizeConfig>
+      headerHeight: optional<SizeConfig>
+      searchbarPlacement: optional<SearchbarPlacement>
+      tabsPlacement: optional<TabsPlacement>
+      contentAlignment: optional<ContentAlignment>
+      headerPosition: optional<HeaderPosition>
+      disableHeader: optional<boolean>
+  SearchbarPlacement:
+    enum:
+      - HEADER
+      - HEADER_TABS
+      - SIDEBAR
+  TabsPlacement:
+    enum:
+      - HEADER
+      - SIDEBAR
+  ContentAlignment:
+    enum:
+      - CENTER
+      - LEFT
+  HeaderPosition:
+    enum:
+      - FIXED
+      - ABSOLUTE
+  PageWidthSizeConfig:
+    union:
+      px: double
+      rem: double
+      full: {}
+  SizeConfig:
+    union:
+      px: double
+      rem: double
+  MetadataConfig:
+    properties:
+      og:site_name: optional<string>
+      og:title: optional<string>
+      og:description: optional<string>
+      og:url: optional<string>
+      og:image: optional<FileIdOrUrl>
+      og:image:width: optional<double>
+      og:image:height: optional<double>
+      og:locale: optional<string>
+      og:logo: optional<FileIdOrUrl>
+      twitter:title: optional<string>
+      twitter:description: optional<string>
+      twitter:handle: optional<string>
+      twitter:image: optional<FileIdOrUrl>
+      twitter:site: optional<string>
+      twitter:url: optional<string>
+      twitter:card: optional<TwitterCardSetting>
+      noindex: optional<boolean>
+      nofollow: optional<boolean>
+  RedirectConfig:
+    properties:
+      source: string
+      destination: string
+  TwitterCardSetting:
+    enum:
+      - summary
+      - summary_large_image
+      - app
+      - player
+  NavbarLink:
+    union:
+      filled: NavbarLinkMetadata
+      outlined: NavbarLinkMetadata
+      minimal: NavbarLinkMetadata
+      github: NavbarGithubMetadata
+      primary: NavbarLinkMetadata
+      secondary: NavbarLinkMetadata
+  NavbarLinkMetadata:
+    properties:
+      url: Url
+      text: optional<string>
+      icon: optional<string>
+      rightIcon: optional<string>
+      rounded: optional<boolean>
+  NavbarGithubMetadata:
+    properties:
+      url: Url
+  FooterLink:
+    union:
+      github: Url
+      twitter: Url
+      x: Url
+      linkedin: Url
+      youtube: Url
+      instagram: Url
+      facebook: Url
+      discord: Url
+      slack: Url
+      hackernews: Url
+      medium: Url
+      website: Url
+  CssConfig:
+    properties:
+      inline: optional<list<string>>
+  JsConfig:
+    properties:
+      remote: optional<list<JsRemoteConfig>>
+      files: list<JsFileConfig>
+      inline: optional<list<string>>
+  JsRemoteConfig:
+    properties:
+      url: Url
+      strategy: optional<JsScriptStrategy>
+  JsFileConfig:
+    properties:
+      fileId: FileId
+      strategy: optional<JsScriptStrategy>
+  JsScriptStrategy:
+    enum:
+      - beforeInteractive
+      - afterInteractive
+      - lazyOnload
+  IntegrationsConfig:
+    properties:
+      intercom: optional<string>
+  DocsTypographyConfigV2:
+    properties:
+      headingsFont: optional<FontConfigV2>
+      bodyFont: optional<FontConfigV2>
+      codeFont: optional<FontConfigV2>
+  FontConfigV2:
+    union:
+      custom: CustomFontConfig
+  CustomFontConfig:
+    properties:
+      name: string
+      variants: list<CustomFontConfigVariant>
+      display: optional<FontDisplay>
+      fallback: optional<list<string>>
+      fontVariationSettings: optional<string>
+  CustomFontConfigVariant:
+    properties:
+      fontFile: FileId
+      weight: optional<list<string>>
+      style: optional<list<FontStyle>>
+  FontStyle:
+    enum:
+      - normal
+      - italic
+  FontDisplay:
+    enum:
+      - auto
+      - block
+      - swap
+      - fallback
+      - optional
+  ThemedFileId:
+    properties:
+      dark: optional<FileId>
+      light: optional<FileId>
+    availability: deprecated
+  ColorsConfig:
+    properties:
+      accentPrimary: optional<RgbaColor>
+    availability: deprecated
+  ColorsConfigV2:
+    properties:
+      accentPrimary: optional<ColorConfig>
+      background: optional<ColorConfig>
+    availability: deprecated
+  ColorConfig:
+    union:
+      unthemed: ColorUnthemedConfig
+      themed: ColorThemedConfig
+    availability: deprecated
+  ColorUnthemedConfig:
+    properties:
+      color: optional<RgbaColor>
+    availability: deprecated
+  ColorThemedConfig:
+    properties:
+      dark: optional<RgbaColor>
+      light: optional<RgbaColor>
+    availability: deprecated
+  DocsTypographyConfig:
+    properties:
+      headingsFont: optional<FontConfig>
+      bodyFont: optional<FontConfig>
+      codeFont: optional<FontConfig>
+    availability: deprecated
+  FontConfig:
+    properties:
+      name: string
+      fontFile: FileId
+    availability: deprecated

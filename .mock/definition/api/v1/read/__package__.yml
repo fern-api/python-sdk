@@ -1,0 +1,100 @@
+imports:
+  endpoint: endpoint.yml
+  type: type.yml
+  rootCommons: ../../../commons.yml
+  commons: commons.yml
+  webhook: webhook.yml
+  websocket: websocket.yml
+service:
+  base-path: /registry/api
+  auth: false
+  endpoints:
+    getApi:
+      method: GET
+      path: /load/{apiDefinitionId}
+      path-parameters:
+        apiDefinitionId: rootCommons.ApiDefinitionId
+      response: ApiDefinition
+      errors:
+        - ApiDoesNotExistError
+  audiences:
+    - read
+types:
+  ApiDefinition:
+    properties:
+      id: rootCommons.ApiDefinitionId
+      rootPackage: ApiDefinitionPackage
+      types: map<type.TypeId, type.TypeDefinition>
+      subpackages: map<SubpackageId, ApiDefinitionSubpackage>
+      auth: optional<ApiAuth>
+      hasMultipleBaseUrls:
+        type: optional<boolean>
+        docs: |
+          If empty, assume false. 
+          Whether or not endpoints are being served at different 
+          base urls (i.e. https://a.com and https://b.com)
+      navigation:
+        type: optional<ApiNavigationConfigRoot>
+        docs: Use the docs navigation instead.
+        availability: deprecated
+      globalHeaders: optional<list<endpoint.Header>>
+  ApiNavigationConfigRoot:
+    properties:
+      items: list<ApiNavigationConfigItem>
+  ApiNavigationConfigItem:
+    union:
+      subpackage: ApiNavigationConfigSubpackage
+      endpointId: endpoint.EndpointId
+      websocketId: websocket.WebSocketId
+      webhookId: webhook.WebhookId
+  ApiNavigationConfigSubpackage:
+    properties:
+      subpackageId: SubpackageId
+      items: list<ApiNavigationConfigItem>
+  ApiDefinitionPackage:
+    properties:
+      endpoints: list<endpoint.EndpointDefinition>
+      websockets: list<websocket.WebSocketChannel>
+      webhooks: list<webhook.WebhookDefinition>
+      types: list<type.TypeId>
+      subpackages: list<SubpackageId>
+      pointsTo:
+        type: optional<SubpackageId>
+        docs: >
+          if present, this package should be replaced with the provided
+          subpackage
+
+          in the docs navigation.
+  ApiDefinitionSubpackage:
+    extends:
+      - commons.WithDescription
+      - ApiDefinitionPackage
+    properties:
+      parent: optional<SubpackageId>
+      subpackageId: SubpackageId
+      name: string
+      urlSlug: string
+      displayName: optional<string>
+  SubpackageId: string
+  ApiAuth:
+    union:
+      bearerAuth: BearerAuth
+      basicAuth: BasicAuth
+      header: HeaderAuth
+  BasicAuth:
+    properties:
+      usernameName: optional<string>
+      passwordName: optional<string>
+  BearerAuth:
+    properties:
+      tokenName: optional<string>
+  HeaderAuth:
+    properties:
+      nameOverride: optional<string>
+      headerWireValue: string
+      prefix:
+        type: optional<string>
+        docs: The prefix that comes before the header
+errors:
+  ApiDoesNotExistError:
+    status-code: 404

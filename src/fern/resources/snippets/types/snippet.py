@@ -2,15 +2,43 @@
 
 from __future__ import annotations
 
+import datetime as dt
 import typing
 
+from ....core.datetime_utils import serialize_datetime
 from .go_snippet import GoSnippet
 from .java_snippet import JavaSnippet
 from .python_snippet import PythonSnippet
+from .ruby_snippet import RubySnippet
 from .type_script_snippet import TypeScriptSnippet
 
+try:
+    import pydantic.v1 as pydantic  # type: ignore
+except ImportError:
+    import pydantic  # type: ignore
 
-class Snippet_Typescript(TypeScriptSnippet):
+
+class Base(pydantic.BaseModel):
+    example_identifier: typing.Optional[str] = pydantic.Field(alias="exampleIdentifier", default=None)
+
+    def json(self, **kwargs: typing.Any) -> str:
+        kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
+        return super().json(**kwargs_with_defaults)
+
+    def dict(self, **kwargs: typing.Any) -> typing.Dict[str, typing.Any]:
+        kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
+        return super().dict(**kwargs_with_defaults)
+
+    class Config:
+        frozen = True
+        smart_union = True
+        allow_population_by_field_name = True
+        populate_by_name = True
+        extra = pydantic.Extra.allow
+        json_encoders = {dt.datetime: serialize_datetime}
+
+
+class Snippet_Typescript(TypeScriptSnippet, Base):
     type: typing.Literal["typescript"]
 
     class Config:
@@ -20,7 +48,7 @@ class Snippet_Typescript(TypeScriptSnippet):
         populate_by_name = True
 
 
-class Snippet_Python(PythonSnippet):
+class Snippet_Python(PythonSnippet, Base):
     type: typing.Literal["python"]
 
     class Config:
@@ -30,7 +58,7 @@ class Snippet_Python(PythonSnippet):
         populate_by_name = True
 
 
-class Snippet_Java(JavaSnippet):
+class Snippet_Java(JavaSnippet, Base):
     type: typing.Literal["java"]
 
     class Config:
@@ -40,7 +68,7 @@ class Snippet_Java(JavaSnippet):
         populate_by_name = True
 
 
-class Snippet_Go(GoSnippet):
+class Snippet_Go(GoSnippet, Base):
     type: typing.Literal["go"]
 
     class Config:
@@ -50,4 +78,14 @@ class Snippet_Go(GoSnippet):
         populate_by_name = True
 
 
-Snippet = typing.Union[Snippet_Typescript, Snippet_Python, Snippet_Java, Snippet_Go]
+class Snippet_Ruby(RubySnippet, Base):
+    type: typing.Literal["ruby"]
+
+    class Config:
+        frozen = True
+        smart_union = True
+        allow_population_by_field_name = True
+        populate_by_name = True
+
+
+Snippet = typing.Union[Snippet_Typescript, Snippet_Python, Snippet_Java, Snippet_Go, Snippet_Ruby]

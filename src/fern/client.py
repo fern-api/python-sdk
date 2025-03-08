@@ -6,7 +6,9 @@ import httpx
 
 from .core.client_wrapper import AsyncClientWrapper, SyncClientWrapper
 from .environment import FernEnvironment
+from .resources.sdk.client import AsyncSdkClient, SdkClient
 from .resources.snippets.client import AsyncSnippetsClient, SnippetsClient
+from .resources.tokens.client import AsyncTokensClient, TokensClient
 
 
 class Fern:
@@ -20,7 +22,7 @@ class Fern:
 
                                         Defaults to FernEnvironment.PRODUCTION
 
-        - token: typing.Union[str, typing.Callable[[], str]].
+        - token: typing.Optional[typing.Union[str, typing.Callable[[], str]]].
 
         - timeout: typing.Optional[float]. The timeout to be used, in seconds, for requests by default the timeout is 60 seconds.
 
@@ -38,7 +40,7 @@ class Fern:
         *,
         base_url: typing.Optional[str] = None,
         environment: FernEnvironment = FernEnvironment.PRODUCTION,
-        token: typing.Union[str, typing.Callable[[], str]],
+        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
         timeout: typing.Optional[float] = 60,
         httpx_client: typing.Optional[httpx.Client] = None
     ):
@@ -47,7 +49,9 @@ class Fern:
             token=token,
             httpx_client=httpx.Client(timeout=timeout) if httpx_client is None else httpx_client,
         )
+        self.sdk = SdkClient(client_wrapper=self._client_wrapper)
         self.snippets = SnippetsClient(client_wrapper=self._client_wrapper)
+        self.tokens = TokensClient(client_wrapper=self._client_wrapper)
 
 
 class AsyncFern:
@@ -61,7 +65,7 @@ class AsyncFern:
 
                                         Defaults to FernEnvironment.PRODUCTION
 
-        - token: typing.Union[str, typing.Callable[[], str]].
+        - token: typing.Optional[typing.Union[str, typing.Callable[[], str]]].
 
         - timeout: typing.Optional[float]. The timeout to be used, in seconds, for requests by default the timeout is 60 seconds.
 
@@ -79,7 +83,7 @@ class AsyncFern:
         *,
         base_url: typing.Optional[str] = None,
         environment: FernEnvironment = FernEnvironment.PRODUCTION,
-        token: typing.Union[str, typing.Callable[[], str]],
+        token: typing.Optional[typing.Union[str, typing.Callable[[], str]]] = None,
         timeout: typing.Optional[float] = 60,
         httpx_client: typing.Optional[httpx.AsyncClient] = None
     ):
@@ -88,7 +92,9 @@ class AsyncFern:
             token=token,
             httpx_client=httpx.AsyncClient(timeout=timeout) if httpx_client is None else httpx_client,
         )
+        self.sdk = AsyncSdkClient(client_wrapper=self._client_wrapper)
         self.snippets = AsyncSnippetsClient(client_wrapper=self._client_wrapper)
+        self.tokens = AsyncTokensClient(client_wrapper=self._client_wrapper)
 
 
 def _get_base_url(*, base_url: typing.Optional[str] = None, environment: FernEnvironment) -> str:

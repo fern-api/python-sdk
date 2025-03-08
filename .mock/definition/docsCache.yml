@@ -1,0 +1,14 @@
+imports:
+  commons: commons.yml
+service:
+  base-path: /docs-cache
+  auth: true
+  endpoints:
+    invalidate:
+      method: POST
+      path: /invalidate
+      request:
+        body:
+          properties:
+            url: string
+        name: InvalidateCachedDocsRequest

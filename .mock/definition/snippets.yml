@@ -1,23 +1,13 @@
-# yaml-language-server: $schema=https://raw.githubusercontent.com/fern-api/fern/main/fern.schema.json
-
 imports:
   commons: commons.yml
-
 service:
   auth: true
   base-path: /snippets
   endpoints:
     get:
-      path: ""
-      docs: Get snippet by endpoint method and path
-      display-name: Get snippet for endpoint
-      availability: pre-release
-      audiences: 
-        - external
-        - fiddle
+      path: ''
       method: POST
       request:
-        name: GetSnippetRequest
         body:
           properties:
             orgId:
@@ -30,17 +20,36 @@ service:
               docs: |
                 If you have more than one API, you must specify its ID.
             sdks:
-              type: optional<list<SDK>>
+              type: optional<list<SDKRequest>>
               docs: |
                 The SDKs for which to load snippets. If unspecified,
                 snippets for the latest published SDKs will be returned.
-            loadLevel: 
-              type: optional<SnippetLoadLevel>
-              docs: |
-                The level of detail to load for the snippet. If unspecified, 
-                the full snippet will be returned.
-            endpoint: EndpointIdentifier
+            endpoint: commons.EndpointIdentifier
+            exampleIdentifier:
+              type: optional<string>
+              docs: >-
+                The identifier of the example to fetch the snippet for, this is
+                ignored if a payload is passed in.
+            payload:
+              type: optional<CustomSnippetPayload>
+              docs: >
+                The JSON payload to be used as the input for the code snippet.
+                This should just be thought of as the
+
+                request body you'd be sending to the endpoint as a cURL. If not
+                specified then the default payload will be used.
+        name: GetSnippetRequest
       response: list<Snippet>
+      errors:
+        - commons.UnauthorizedError
+        - commons.UserNotInOrgError
+        - commons.UnavailableError
+        - ApiIdRequiredError
+        - OrgIdRequiredError
+        - OrgIdAndApiIdNotFound
+        - OrgIdNotFound
+        - EndpointNotFound
+        - SDKNotFound
       examples:
         - request:
             endpoint:
@@ -52,40 +61,42 @@ service:
                 sdk:
                   package: vellum-ai
                   version: 1.2.1
-                sync_client: |
+                sync_client: >
                   import Vellum from vellum.client
 
                   client = Vellum(api_key="YOUR_API_KEY")
-                  client.search(query="Find documents written in the last 5 days")
-                async_client: |
+
+                  client.search(query="Find documents written in the last 5
+                  days")
+                async_client: >
                   import VellumAsync from vellum.client
 
                   client = VellumAsync(api_key="YOUR_API_KEY")
-                  await client.search(query="Find documents written in the last 5 days")
+
+                  await client.search(query="Find documents written in the last
+                  5 days")
               - type: typescript
                 sdk:
                   package: vellum-ai
                   version: 1.2.1
                 client: |
                   import { VellumClient } from "vellum-ai";
-
                   const vellum = VellumClient({
                     apiKey="YOUR_API_KEY"
                   })
                   vellum.search({
                     query: "Find documents written in the last 5 days"
                   })
-
-    load:
-      path: /load
-      display-name: Load all snippets
-      method: POST
+      display-name: Get snippet for endpoint
+      docs: Get snippet by endpoint method and path
       availability: pre-release
-      audiences: 
+      audiences:
         - external
         - fiddle
+    load:
+      path: /load
+      method: POST
       request:
-        name: ListSnippetsRequest
         query-parameters:
           page: optional<integer>
         body:
@@ -100,16 +111,22 @@ service:
               docs: |
                 If you have more than one API, you must specify its ID.
             sdks:
-              type: optional<list<SDK>>
+              type: optional<list<SDKRequest>>
               docs: |
                 The SDKs for which to load snippets. If unspecified,
                 snippets for the latest published SDKs will be returned.
-            loadLevel: 
-              type: optional<SnippetLoadLevel>
-              docs: |
-                The level of detail to load for the snippet. If unspecified, 
-                the full snippet will be returned.
+        name: ListSnippetsRequest
       response: SnippetsPage
+      errors:
+        - commons.UnauthorizedError
+        - commons.UserNotInOrgError
+        - commons.UnavailableError
+        - InvalidPageError
+        - ApiIdRequiredError
+        - OrgIdRequiredError
+        - OrgIdAndApiIdNotFound
+        - OrgIdNotFound
+        - SDKNotFound
       examples:
         - query-parameters:
             page: 1
@@ -119,7 +136,6 @@ service:
             sdks:
               - type: python
                 package: vellum-ai
-                version: 1.2.1
           response:
             body:
               next: 2
@@ -130,23 +146,26 @@ service:
                       sdk:
                         package: vellum-ai
                         version: 1.2.1
-                      sync_client: |
+                      sync_client: >
                         import Vellum from vellum.client
 
                         client = Vellum(api_key="YOUR_API_KEY")
-                        client.search(query="Find documents written in the last 5 days")
-                      async_client: |
+
+                        client.search(query="Find documents written in the last
+                        5 days")
+                      async_client: >
                         import Vellum from vellum.client
 
                         client = Vellum(api_key="YOUR_API_KEY")
-                        client.search(query="Find documents written in the last 5 days")
+
+                        client.search(query="Find documents written in the last
+                        5 days")
                     - type: typescript
                       sdk:
                         package: vellum-ai
                         version: 1.2.1
                       client: |
                         import { VellumClient } from "vellum-ai";
-
                         const vellum = VellumClient({
                           apiKey="YOUR_API_KEY"
                         })
@@ -159,23 +178,27 @@ service:
                       sdk:
                         package: vellum-ai
                         version: 1.2.1
-                      sync_client: |
+                      sync_client: >
                         import Vellum from vellum.client
 
                         client = Vellum(api_key="YOUR_API_KEY")
-                        client.document_indexes.create(name="meeting-reports", status="ACTIVE")
-                      async_client: |
+
+                        client.document_indexes.create(name="meeting-reports",
+                        status="ACTIVE")
+                      async_client: >
                         import VellumAsync from vellum.client
 
                         client = VellumAsync(api_key="YOUR_API_KEY")
-                        await client.document_indexes.create(name="meeting-reports", status="ACTIVE")
+
+                        await
+                        client.document_indexes.create(name="meeting-reports",
+                        status="ACTIVE")
                     - type: typescript
                       sdk:
                         package: vellum-ai
                         version: 1.2.1
                       client: |
                         import { VellumClient } from "vellum-ai";
-
                         const vellum = VellumClient({
                           apiKey="YOUR_API_KEY"
                         })
@@ -183,57 +206,67 @@ service:
                           name: "meeting-reports",
                           status: "ACTIVE"
                         })
-
+      display-name: Load all snippets
+      availability: pre-release
+      audiences:
+        - external
+        - fiddle
 types:
-  SnippetLoadLevel: 
-    enum: 
-      - value: full
-        docs: | 
-          The full snippet including client instantiation and method call.
-      - value: endpoint
-        docs: | 
-          Only returns the part of the snippet for the endpoint call. In 
-          other words, the client instantiation is not included.
-
-  EndpointIdentifier:
+  SDKRequest:
+    union:
+      typescript: TypeScriptSDKRequest
+      python: PythonSDKRequest
+      go: GoSDKRequest
+      ruby: RubySDKRequest
+      java: JavaSDKRequest
+  TypeScriptSDKRequest:
     properties:
-      path: EndpointPath
-      method: EndpointMethod
-
-  EndpointPath:
-    type: string
-    docs: The relative path for an endpont (e.g. `/users/{userId}`)
-
-  EndpointMethod:
-    enum:
-      - PUT
-      - POST
-      - GET
-      - PATCH
-      - DELETE
-
+      package: string
+      version: optional<string>
+  PythonSDKRequest:
+    properties:
+      package: string
+      version: optional<string>
+  GoSDKRequest:
+    properties:
+      githubRepo: string
+      version: optional<string>
+  RubySDKRequest:
+    properties:
+      gem: string
+      version: optional<string>
+  JavaSDKRequest:
+    properties:
+      group:
+        type: string
+        docs: The maven repository group (e.g. `com.stripe.java`)
+      artifact:
+        type: string
+        docs: The artifact (e.g. `stripe-java`)
+      version: optional<string>
   SDK:
     union:
       typescript: TypeScriptSDK
       python: PythonSDK
       go: GoSDK
+      ruby: RubySDK
       java: JavaSDK
-
   TypeScriptSDK:
     properties:
       package: string
       version: string
-
   PythonSDK:
     properties:
       package: string
       version: string
-
   GoSDK:
     properties:
       githubRepo: string
       version: string
-
+  RubySDK:
+    properties:
+      gem: string
+      version: string
   JavaSDK:
     properties:
       group:
@@ -243,48 +276,109 @@ types:
         type: string
         docs: The artifact (e.g. `stripe-java`)
       version: string
-  
-  ####### Load Snippets #######
-
+  ParameterPayload:
+    properties:
+      name: string
+      value: unknown
+  CustomSnippetPayload:
+    properties:
+      headers: optional<list<ParameterPayload>>
+      pathParameters: optional<list<ParameterPayload>>
+      queryParameters: optional<list<ParameterPayload>>
+      requestBody: optional<unknown>
+      auth: optional<AuthPayload>
+    audiences:
+      - templateResolver
+  AuthPayload:
+    union:
+      bearer: BearerTokenAuthPayload
+      basic: BasicAuthPayload
+  BearerTokenAuthPayload:
+    properties:
+      token: string
+  BasicAuthPayload:
+    properties:
+      username: string
+      password: string
   SnippetsPage:
     properties:
       next:
         type: optional<integer>
-        docs: If present, pass this into the `page` query parameter to load the next page.
-      snippets:  
-        type: map<EndpointPath, SnippetsByEndpointMethod>
-        docs: | 
-          The snippets are returned as a map of endpoint path (e.g. `/api/users`) 
-          to a map of endpoint method (e.g. `POST`) to snippets. 
-  
-  SnippetsByEndpointMethod: 
-    type: map<EndpointMethod, list<Snippet>>
+        docs: >-
+          If present, pass this into the `page` query parameter to load the next
+          page.
+      snippets:
+        type: map<commons.EndpointPath, SnippetsByEndpointMethod>
+        docs: >
+          The snippets are returned as a map of endpoint path (e.g.
+          `/api/users`) 
 
-  Snippet: 
-    union: 
+          to a map of endpoint method (e.g. `POST`) to snippets.
+  SnippetsByEndpointMethod:
+    type: map<commons.EndpointMethod, list<Snippet>>
+  Snippet:
+    base-properties:
+      exampleIdentifier: optional<string>
+    union:
       typescript: TypeScriptSnippet
       python: PythonSnippet
       java: JavaSnippet
       go: GoSnippet
-  
-  TypeScriptSnippet: 
-    properties: 
+      ruby: RubySnippet
+    audiences:
+      - templateResolver
+  TypeScriptSnippet:
+    properties:
       sdk: TypeScriptSDK
       client: string
-  
-  PythonSnippet: 
-    properties: 
+  PythonSnippet:
+    properties:
       sdk: PythonSDK
       async_client: string
       sync_client: string
-  
-  GoSnippet: 
-    properties: 
+  GoSnippet:
+    properties:
       sdk: GoSDK
       client: string
-  
-  JavaSnippet: 
-    properties: 
+  RubySnippet:
+    properties:
+      sdk: RubySDK
+      client: string
+  JavaSnippet:
+    properties:
       sdk: JavaSDK
       async_client: string
       sync_client: string
+errors:
+  ApiIdRequiredError:
+    status-code: 400
+    type: string
+    docs: An ApiId is required
+  OrgIdRequiredError:
+    status-code: 400
+    type: string
+    docs: An OrgId is required
+  SnippetTemplateNotFoundError:
+    status-code: 404
+    type: string
+    docs: A template for this snippet could not be found
+  InvalidPageError:
+    status-code: 400
+    type: string
+    docs: Page must be >=1
+  OrgIdAndApiIdNotFound:
+    status-code: 404
+    type: string
+    docs: The requested OrgId and ApiId was not found
+  EndpointNotFound:
+    status-code: 404
+    type: string
+    docs: The requested endpoint was not found
+  OrgIdNotFound:
+    status-code: 404
+    type: string
+    docs: The requested OrgId was not found
+  SDKNotFound:
+    status-code: 404
+    type: string
+    docs: The requested SDK was not found

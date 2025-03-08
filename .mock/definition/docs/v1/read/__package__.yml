@@ -1,0 +1,285 @@
+imports:
+  algolia: ../../../algolia.yml
+  rootCommons: ../../../commons.yml
+  apiReadV1: ../../../api/v1/read/__package__.yml
+  commons: ../commons/commons.yml
+  navigation: ../../../navigation/__package__.yml
+service:
+  base-path: /registry/docs
+  auth: false
+  endpoints:
+    getDocsForDomainLegacy:
+      method: GET
+      path: /load/{domain}
+      path-parameters:
+        domain: string
+      response: DocsDefinition
+      errors:
+        - DomainNotRegisteredError
+      availability: deprecated
+    getDocsForDomain:
+      method: POST
+      path: /load
+      request:
+        body:
+          properties:
+            domain: string
+        name: LoadDocsForDomainRequest
+      response: DocsDefinition
+      errors:
+        - DomainNotRegisteredError
+      availability: deprecated
+  audiences:
+    - read
+types:
+  File:
+    union:
+      url: UrlFile
+      image: ImageFile
+  UrlFile:
+    properties:
+      url: commons.Url
+  ImageFile:
+    properties:
+      url: commons.Url
+      width: double
+      height: double
+      blurDataUrl: optional<string>
+      alt: optional<string>
+  Height: double
+  LoadDocsForUrlResponse:
+    properties:
+      baseUrl: string
+      definition: DocsDefinition
+  DocsDefinition:
+    properties:
+      algoliaSearchIndex: optional<algolia.AlgoliaSearchIndex>
+      pages: map<commons.PageId, PageContent>
+      apis: map<rootCommons.ApiDefinitionId, apiReadV1.ApiDefinition>
+      files: map<commons.FileId, commons.Url>
+      filesV2: map<commons.FileId, File>
+      jsFiles:
+        type: optional<map<string, string>>
+        docs: >
+          A map of file names to their contents. 
+
+          The key is the absolute path file name and the value is the file
+          contents.
+      id: optional<rootCommons.DocsConfigId>
+      config: DocsConfig
+      search: algolia.SearchInfo
+  PageContent:
+    properties:
+      markdown: string
+      editThisPageUrl: optional<commons.Url>
+  DocsConfig:
+    properties:
+      title: optional<string>
+      defaultLanguage: optional<commons.ProgrammingLanguage>
+      analyticsConfig: optional<commons.AnalyticsConfig>
+      navigation: NavigationConfig
+      navbarLinks: optional<list<commons.NavbarLink>>
+      footerLinks: optional<list<commons.FooterLink>>
+      logoHeight: optional<Height>
+      logoHref: optional<commons.Url>
+      favicon: optional<commons.FileId>
+      metadata: optional<commons.MetadataConfig>
+      redirects: optional<list<commons.RedirectConfig>>
+      colorsV3: optional<ColorsConfigV3>
+      layout: optional<commons.DocsLayoutConfig>
+      typographyV2: optional<commons.DocsTypographyConfigV2>
+      integrations: optional<commons.IntegrationsConfig>
+      css: optional<commons.CssConfig>
+      js: optional<commons.JsConfig>
+  ColorsConfigV3:
+    union:
+      dark: ThemeConfig
+      light: ThemeConfig
+      darkAndLight: DarkAndLightModeConfig
+  ThemeConfig:
+    properties:
+      logo: optional<commons.FileId>
+      backgroundImage: optional<commons.FileId>
+      accentPrimary: commons.RgbaColor
+      background: Background
+      border: optional<commons.RgbaColor>
+      sidebarBackground: optional<commons.RgbaColor>
+      headerBackground: optional<commons.RgbaColor>
+      cardBackground: optional<commons.RgbaColor>
+  DarkAndLightModeConfig:
+    properties:
+      dark: ThemeConfig
+      light: ThemeConfig
+  Background:
+    union:
+      solid: commons.RgbaColor
+      gradient: {}
+  NavigationConfig:
+    discriminated: false
+    union:
+      - UnversionedNavigationConfig
+      - VersionedNavigationConfig
+  UnversionedNavigationConfig:
+    discriminated: false
+    union:
+      - UnversionedTabbedNavigationConfig
+      - UnversionedUntabbedNavigationConfig
+  UnversionedTabbedNavigationConfig:
+    properties:
+      tabs: list<NavigationTab>
+      landingPage: optional<PageMetadata>
+  NavigationTab:
+    union:
+      group: NavigationTabGroup
+      link: NavigationTabLink
+      changelog: ChangelogSection
+      changelogV3: ChangelogSectionV3
+  NavigationTabGroup:
+    extends: NavigationNodeMetadata
+    properties:
+      title: string
+      items: list<NavigationItem>
+      skipUrlSlug: boolean
+  NavigationTabLink:
+    properties:
+      title: string
+      icon: optional<string>
+      url: commons.Url
+  UnversionedUntabbedNavigationConfig:
+    properties:
+      items: list<NavigationItem>
+      landingPage: optional<PageMetadata>
+  VersionedNavigationConfig:
+    properties:
+      versions: list<VersionedNavigationConfigData>
+  VersionedNavigationConfigData:
+    properties:
+      version: rootCommons.VersionId
+      urlSlug: string
+      availability: optional<VersionAvailability>
+      config: UnversionedNavigationConfig
+  VersionAvailability:
+    enum:
+      - Stable
+      - GenerallyAvailable
+      - Deprecated
+      - Beta
+  NavigationItem:
+    union:
+      page: PageMetadata
+      api: ApiSection
+      apiV2: ApiSectionV2
+      section: DocsSection
+      link: LinkMetadata
+      changelog: ChangelogSection
+      changelogV3: ChangelogSectionV3
+  PageMetadata:
+    extends: NavigationNodeMetadata
+    properties:
+      id: commons.PageId
+      title: string
+  NavigationNodeMetadata:
+    properties:
+      icon: optional<string>
+      hidden: optional<boolean>
+      urlSlug: string
+      fullSlug: optional<list<string>>
+  LinkMetadata:
+    properties:
+      title: string
+      icon: optional<string>
+      url: string
+  ApiSection:
+    extends: NavigationNodeMetadata
+    properties:
+      title: string
+      api: rootCommons.ApiDefinitionId
+      skipUrlSlug: boolean
+      artifacts:
+        type: optional<ApiArtifacts>
+        availability: deprecated
+      showErrors: boolean
+      changelog: optional<ChangelogSection>
+      navigation: optional<ApiNavigationConfigRoot>
+      longScrolling: optional<boolean>
+      flattened: optional<boolean>
+    availability: deprecated
+  ApiSectionV2:
+    properties:
+      node: navigation.ApiReferenceNode
+  ApiNavigationConfigRoot:
+    properties:
+      summaryPageId: optional<commons.PageId>
+      items: list<ApiNavigationConfigItem>
+    availability: deprecated
+  ApiNavigationConfigItem:
+    union:
+      subpackage: ApiNavigationConfigSubpackage
+      endpointId: commons.EndpointId
+      websocketId: commons.WebSocketId
+      webhookId: commons.WebhookId
+      page: PageMetadata
+    availability: deprecated
+  ApiNavigationConfigSubpackage:
+    properties:
+      summaryPageId: optional<commons.PageId>
+      subpackageId: commons.SubpackageId
+      items: list<ApiNavigationConfigItem>
+    availability: deprecated
+  ChangelogSection:
+    extends: NavigationNodeMetadata
+    properties:
+      title: optional<string>
+      description: optional<string>
+      pageId: optional<commons.PageId>
+      items: list<ChangelogItem>
+  ChangelogSectionV3:
+    properties:
+      node: navigation.ChangelogNode
+  ChangelogItem:
+    properties:
+      date: date
+      pageId: commons.PageId
+  DocsSection:
+    extends: NavigationNodeMetadata
+    properties:
+      title: string
+      items: list<NavigationItem>
+      skipUrlSlug: boolean
+      collapsed: boolean
+      overviewPageId: optional<commons.PageId>
+  ApiArtifacts:
+    properties:
+      sdks: list<PublishedSdk>
+      postman: optional<PublishedPostmanCollection>
+  PublishedPostmanCollection:
+    properties:
+      url: string
+      githubRepo: optional<GitHubRepo>
+  PublishedSdk:
+    union:
+      npm: NpmPackage
+      maven: MavenPackage
+      pypi: PypiPackage
+  NpmPackage:
+    properties:
+      packageName: string
+      githubRepo: GitHubRepo
+      version: string
+  MavenPackage:
+    properties:
+      coordinate: string
+      githubRepo: GitHubRepo
+      version: string
+  PypiPackage:
+    properties:
+      packageName: string
+      githubRepo: GitHubRepo
+      version: string
+  GitHubRepo:
+    properties:
+      name: string
+      url: string
+errors:
+  DomainNotRegisteredError:
+    status-code: 404

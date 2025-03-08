@@ -4,8 +4,6 @@ import datetime as dt
 import typing
 
 from ....core.datetime_utils import serialize_datetime
-from .endpoint_method import EndpointMethod
-from .endpoint_path import EndpointPath
 
 try:
     import pydantic.v1 as pydantic  # type: ignore
@@ -13,9 +11,21 @@ except ImportError:
     import pydantic  # type: ignore
 
 
-class EndpointIdentifier(pydantic.BaseModel):
-    path: EndpointPath
-    method: EndpointMethod
+class NugetPublishingConfiguration(pydantic.BaseModel):
+    url: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    Registry URL (defaults to public NuGet registry)
+    """
+
+    package_name: str = pydantic.Field(alias="packageName")
+    """
+    Name of the package to publish
+    """
+
+    token: typing.Optional[str] = pydantic.Field(default=None)
+    """
+    NuGet authentication token for publishing
+    """
 
     def json(self, **kwargs: typing.Any) -> str:
         kwargs_with_defaults: typing.Any = {"by_alias": True, "exclude_unset": True, **kwargs}
@@ -28,5 +38,7 @@ class EndpointIdentifier(pydantic.BaseModel):
     class Config:
         frozen = True
         smart_union = True
+        allow_population_by_field_name = True
+        populate_by_name = True
         extra = pydantic.Extra.allow
         json_encoders = {dt.datetime: serialize_datetime}
